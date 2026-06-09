@@ -1,0 +1,21 @@
+{
+    "recommendations": [
+        // Python extensions (Microsoft)
+        "ms-python.debugpy", // Python debugging.
+        "ms-python.pylint", // Pylint integration.
+        "ms-python.python", // Python language support.
+        "ms-python.vscode-pylance", // Python language support.
+        // Python extensions (Non-Microsoft)
+        "charliermarsh.ruff", // Ruff formatter.
+        "kevinrose.vsc-python-indent", // Correct Python indentation.
+        // Git extensions
+        "piotrpalarz.vscode-gitignore-generator", // Generate .gitignore files.
+        // Miscellaneous tools
+        "alefragnani.bookmarks", // Bookmarks.
+        "gruntfuggly.todo-tree", // Show TODO, FIXME, etc. in a tree view.
+        "oderwat.indent-rainbow", // Indent Rainbow.
+        "shardulm94.trailing-spaces", // Highlight trailing spaces.
+        "tamasfe.even-better-toml", // Improved TOML syntax highlighting.
+        "tyriar.sort-lines", // Sort Lines.
+    ]
+}

@@ -1,0 +1,50 @@
+{
+    "makefile.configureOnOpen": false,
+    "files.associations": {
+        "*.FCMacro": "python",
+        "*.fcmacro": "python"
+    },
+    // Python settings
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": false,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.diagnosticSeverityOverrides": {},
+    "python.analysis.autoSearchPaths": true,
+    // Ruff settings
+    "ruff.importStrategy": "useBundled",
+    // Copilot settings
+    "search.searchView.keywordSuggestions": true,
+    "chat.agent.maxRequests": 100,
+    "chat.checkpoints.showFileChanges": true,
+    "github.copilot.chat.skillTool.enabled": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.chat.localeOverride": "en",
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "text": "Write only one very short sentence summarizing the most significant changes. Max 100 characters."
+        }
+    ],
+    // Tree settings
+    "todo-tree.ripgrep.ripgrep": "C:\\ripgrep\\rg.exe",
+    "todo-tree.tree.showCountsInTree": true,
+    "todo-tree.highlights.useColourScheme": true,
+    "todo-tree.general.statusBar": "total",
+    "todo-tree.general.showActivityBarBadge": true,
+    "todo-tree.general.periodicRefreshInterval": 10,
+    "todo-tree.tree.expanded": true,
+    "todo-tree.general.tags": [
+        "BUG",
+        "HACK",
+        "FIXME",
+        "TODO",
+        "XXX",
+        "[ ]",
+        "[x]"
+    ],
+}

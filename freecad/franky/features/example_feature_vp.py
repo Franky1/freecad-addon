@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""
+Basic ViewProvider example.
+
+see: https://wiki.freecad.org/Scripted_objects
+"""
+
+from __future__ import annotations
+
+import FreeCADGui as Gui
+
+from ..resources import Resources
+
+
+class MyCoolCubeViewProvider:
+    """
+    Basic ViewProvider with custom Icon.
+    """
+
+    def __init__(self, obj: Gui.ViewProviderDocumentObject) -> None:
+        obj.Proxy = self
+
+    def getIcon(self) -> str:
+        return Resources.icon("franky.svg")

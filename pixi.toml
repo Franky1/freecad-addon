@@ -1,0 +1,16 @@
+[project]
+authors = ["Franky1 <Franky1@users.noreply.github.com>"]
+channels = ["freecad/label/dev", "conda-forge"]
+description = "Personal FreeCAD AddOn Workbench"
+name = "freecad.franky"
+platforms = ["osx-arm64", "linux-aarch64", "linux-64", "win-64", "osx-64"]
+version = "0.1.0"
+
+[pypi-dependencies]
+freecad-franky = { path = ".", editable = true }
+
+[tasks]
+test = "python tests/tests.py"
+
+[dependencies]
+freecad = ">=1.0.0,<2"

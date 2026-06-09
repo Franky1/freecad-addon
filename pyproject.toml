@@ -1,0 +1,43 @@
+# References:
+# https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+# https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages
+# https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "freecad-franky"
+dynamic = ["version"]
+description = "Personal FreeCAD AddOn Workbench"
+readme = "README.md"
+license = "LGPL-2.1-or-later"
+license-files = [
+    "LICENSE-Code",
+    "LICENSE-Assets"
+]
+maintainers = [
+    {name = "Franky1", email = "Franky1@users.noreply.github.com"},
+]
+requires-python = ">=3.10"
+dependencies = ["pillow"]
+
+[dependency-groups]
+dev = [
+    "PySide6",
+    "ruff",
+    "codespell",
+    "freecad-stubs",
+]
+
+[project.urls]
+source = "https://github.com/Franky1/freecad-addon"
+
+[tool.hatch.version]
+path = "freecad/franky/version.py"
+# Hatchling looks for __version__ = "..." by default
+
+[tool.hatch.build.targets.wheel]
+packages = ["freecad-franky"]
