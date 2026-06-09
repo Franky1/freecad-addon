@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Isometric cube representing the solid being exported -->
+  <g fill="none" stroke="#6f42c1" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="8,16 24,8 40,16 24,24" fill="#a98fe0"/>
+    <polygon points="8,16 24,24 24,44 8,36" fill="#6f42c1"/>
+    <polygon points="40,16 24,24 24,44 40,36" fill="#8a63d2"/>
+  </g>
+  <!-- Export arrow pointing out to the file -->
+  <g fill="#00ae42" stroke="#00ae42" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <line x1="30" y1="48" x2="52" y2="48"/>
+    <polygon points="48,40 60,48 48,56"/>
+  </g>
+  <!-- 3MF label -->
+  <text x="44" y="22" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#24292f">3MF</text>
+</svg>

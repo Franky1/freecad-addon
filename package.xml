@@ -8,7 +8,7 @@
 
     <name>Franky</name>
     <description>Personal FreeCAD AddOn Workbench</description>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <date>2026-06-09</date>
 
     <!--[ Ecosystem Requirements ]-->
@@ -27,11 +27,12 @@
     -->
 
     <!--[ Tags ]-->
-    <!--
-    <tag>Template</tag>
-    <tag>Minimal</tag>
-    <tag>Example</tag>
-    -->
+    <tag>Export</tag>
+    <tag>STEP</tag>
+    <tag>Slicer</tag>
+    <tag>BambuStudio</tag>
+    <tag>IdeaMaker</tag>
+    <tag>3D Printing</tag>
 
     <!--[ Maintainers ]-->
 

@@ -10,6 +10,11 @@ from typing import ClassVar
 import FreeCAD as App
 
 from .example_command import ExampleCommand
+from .export_3mf import Export3mfCommand
+from .export_bambustudio import ExportBambuStudioCommand
+from .export_ideamaker import ExportIdeaMakerCommand
+from .export_step import ExportStepCommand
+from .export_stl import ExportStlCommand
 
 
 class WorkbenchManipulator:
@@ -27,8 +32,15 @@ class WorkbenchManipulator:
 
     def modifyToolBars(self) -> list[dict[str, str]]:
         """Add commands to toolbars."""
-        # Add our example command to the File toolbar
-        return [{"append": ExampleCommand.Name, "toolBar": "File"}]
+        # Add our commands to the File toolbar so they are available in any workbench
+        return [
+            {"append": ExampleCommand.Name, "toolBar": "File"},
+            {"append": ExportStepCommand.Name, "toolBar": "File"},
+            {"append": ExportStlCommand.Name, "toolBar": "File"},
+            {"append": Export3mfCommand.Name, "toolBar": "File"},
+            {"append": ExportBambuStudioCommand.Name, "toolBar": "File"},
+            {"append": ExportIdeaMakerCommand.Name, "toolBar": "File"},
+        ]
 
     # Optional but useful (good practice to encapsulate here)
     @classmethod

@@ -51,3 +51,18 @@ Good practices:
 
 from .example_command import ExampleCommand as ExampleCommand
 from .example_manipulator import WorkbenchManipulator as WorkbenchManipulator
+from .export_bambustudio import (
+    ExportBambuStudioCommand as ExportBambuStudioCommand,
+)
+from .export_ideamaker import (
+    ExportIdeaMakerCommand as ExportIdeaMakerCommand,
+)
+from .export_step import (
+    ExportStepCommand as ExportStepCommand,
+)
+from .export_stl import (
+    ExportStlCommand as ExportStlCommand,
+)
+from .export_3mf import (
+    Export3mfCommand as Export3mfCommand,
+)

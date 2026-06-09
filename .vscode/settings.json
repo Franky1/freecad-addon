@@ -1,8 +1,7 @@
 {
     "makefile.configureOnOpen": false,
     "files.associations": {
-        "*.FCMacro": "python",
-        "*.fcmacro": "python"
+        "freecad/franky/resources/translations/*.ts": "xml"
     },
     // Python settings
     "[python]": {

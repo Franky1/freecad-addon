@@ -14,9 +14,17 @@ FreeCAD loading sequence:
 Keep this file fast - it runs on every FreeCAD GUI startup.
 """
 
-from .commands import ExampleCommand, WorkbenchManipulator
-from .example_workbench import FrankyWorkbench
+from .commands import (
+    ExampleCommand,
+    Export3mfCommand,
+    ExportBambuStudioCommand,
+    ExportIdeaMakerCommand,
+    ExportStepCommand,
+    ExportStlCommand,
+    WorkbenchManipulator,
+)
 from .resources import Resources
+from .workbench import FrankyWorkbench
 
 # Install icons (optional)
 Resources.gui_register_icons()
@@ -26,6 +34,11 @@ Resources.gui_register_translations()
 
 # Install commands
 ExampleCommand.Install()
+ExportStepCommand.Install()
+ExportStlCommand.Install()
+Export3mfCommand.Install()
+ExportBambuStudioCommand.Install()
+ExportIdeaMakerCommand.Install()
 
 # Add Commands to the Gui
 WorkbenchManipulator.install()

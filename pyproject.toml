@@ -14,23 +14,13 @@ dynamic = ["version"]
 description = "Personal FreeCAD AddOn Workbench"
 readme = "README.md"
 license = "LGPL-2.1-or-later"
-license-files = [
-    "LICENSE-Code",
-    "LICENSE-Assets"
-]
-maintainers = [
-    {name = "Franky1", email = "Franky1@users.noreply.github.com"},
-]
+license-files = ["LICENSE-Code", "LICENSE-Assets"]
+maintainers = [{ name = "Franky1", email = "Franky1@users.noreply.github.com" }]
 requires-python = ">=3.10"
 dependencies = ["pillow"]
 
 [dependency-groups]
-dev = [
-    "PySide6",
-    "ruff",
-    "codespell",
-    "freecad-stubs",
-]
+dev = ["PySide6", "ruff", "mypy", "pylint", "freecad-stubs"]
 
 [project.urls]
 source = "https://github.com/Franky1/freecad-addon"
@@ -41,3 +31,31 @@ path = "freecad/franky/version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["freecad-franky"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["freecad"]
+
+[tool.ruff.lint]
+unfixable = [
+    "F401", # keep unused imports; do not auto-delete on fix
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114", # missing-module-docstring
+    "C0301", # line-too-long
+    "R0903", # too-few-public-methods
+    "W0718", # catching too general exception Exception (for CLI error handling)
+]
