@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-"""Example demonstrating the workbench manipulator."""
+"""Workbench manipulator."""
 
 from __future__ import annotations
 
@@ -34,15 +34,16 @@ class WorkbenchManipulator:
     def modifyToolBars(self) -> list[dict[str, str]]:
         """Add commands to toolbars."""
         # Add our commands to the File toolbar so they are available in any workbench
-        return [
-            {"append": ExampleCommand.Name, "toolBar": "File"},
-            {"append": ExportStepCommand.Name, "toolBar": "File"},
-            {"append": ExportStlCommand.Name, "toolBar": "File"},
-            {"append": Export3mfCommand.Name, "toolBar": "File"},
-            {"append": ExportBambuStudioCommand.Name, "toolBar": "File"},
-            {"append": ExportIdeaMakerCommand.Name, "toolBar": "File"},
-            {"append": ExportOrcaSlicerCommand.Name, "toolBar": "File"},
-        ]
+        # return [
+        #     {"append": ExampleCommand.Name, "toolBar": "File"},
+        #     {"append": ExportStepCommand.Name, "toolBar": "File"},
+        #     {"append": ExportStlCommand.Name, "toolBar": "File"},
+        #     {"append": Export3mfCommand.Name, "toolBar": "File"},
+        #     {"append": ExportBambuStudioCommand.Name, "toolBar": "File"},
+        #     {"append": ExportIdeaMakerCommand.Name, "toolBar": "File"},
+        #     {"append": ExportOrcaSlicerCommand.Name, "toolBar": "File"},
+        # ]
+        return []
 
     # Optional but useful (good practice to encapsulate here)
     @classmethod

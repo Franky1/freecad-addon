@@ -29,6 +29,8 @@
             "text": "Write only one very short sentence summarizing the most significant changes. Max 100 characters."
         }
     ],
+    // version-status-bar settings
+    "versionStatusBar.extensionsToShow": [],
     // Tree settings
     "todo-tree.ripgrep.ripgrep": "C:\\ripgrep\\rg.exe",
     "todo-tree.tree.showCountsInTree": true,
