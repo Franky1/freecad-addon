@@ -23,12 +23,12 @@ from .resources import Resources
 class FrankyWorkbench(Gui.Workbench):
     MenuText: str = translate(
         "Franky",
-        "Franky Workbench",
+        "Franky",
     )
 
     ToolTip: str = translate(
         "Franky",
-        "Franky Workbench tooltip",
+        "Franky Personal FreeCAD AddOn",
     )
 
     Icon: str = Resources.icon(path="franky-wb.svg")

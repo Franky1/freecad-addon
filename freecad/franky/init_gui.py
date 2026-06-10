@@ -15,13 +15,14 @@ Keep this file fast - it runs on every FreeCAD GUI startup.
 """
 
 from .commands import (
-    ExampleCommand,
-    Export3mfCommand,
-    ExportBambuStudioCommand,
-    ExportIdeaMakerCommand,
-    ExportStepCommand,
-    ExportStlCommand,
-    WorkbenchManipulator,
+                       ExampleCommand,
+                       Export3mfCommand,
+                       ExportBambuStudioCommand,
+                       ExportIdeaMakerCommand,
+                       ExportOrcaSlicerCommand,
+                       ExportStepCommand,
+                       ExportStlCommand,
+                       WorkbenchManipulator,
 )
 from .resources import Resources
 from .workbench import FrankyWorkbench
@@ -39,6 +40,7 @@ ExportStlCommand.Install()
 Export3mfCommand.Install()
 ExportBambuStudioCommand.Install()
 ExportIdeaMakerCommand.Install()
+ExportOrcaSlicerCommand.Install()
 
 # Add Commands to the Gui
 WorkbenchManipulator.install()
