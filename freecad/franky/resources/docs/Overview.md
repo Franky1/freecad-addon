@@ -8,7 +8,7 @@ Personal FreeCAD AddOn Workbench
 
 This is a personal FreeCAD AddOn Workbench that provides some useful functions I need. It is specifically tailored to my personal preferences and needs. It is not intended for general use. However, I am sharing it in case it can be useful to others or inspire them to create their own custom workbenches.
 
-The addon provides the following commands, available from the **Franky** workbench (toolbar and menu) as well as the global **File** toolbar in any workbench:
+The addon provides the following commands, available from the **Franky** toolbar and menu in any workbench:
 
 - **Export to STEP**: Exports the selected object(s) to STEP file(s) with a single click.
 - **Export to STL**: Exports the selected object(s) to STL file(s) with a single click.
