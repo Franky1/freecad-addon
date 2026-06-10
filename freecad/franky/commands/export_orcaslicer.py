@@ -30,9 +30,9 @@ def get_orcaslicer_path() -> Path:
         FileNotFoundError: If OrcaSlicer could not be located.
     """
     base_dirs: list[str | None] = [
-        os.environ.get("PROGRAMFILES"),
-        os.environ.get("PROGRAMFILES(X86)"),
-        os.environ.get("LOCALAPPDATA"),
+        os.environ.get(key="PROGRAMFILES"),
+        os.environ.get(key="PROGRAMFILES(X86)"),
+        os.environ.get(key="LOCALAPPDATA"),
     ]
     suffixes: list[Path] = [
         Path("OrcaSlicer") / "OrcaSlicer.exe",

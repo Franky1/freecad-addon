@@ -8,9 +8,10 @@ import tempfile
 from pathlib import Path
 from typing import ClassVar
 
-import FreeCAD as App
 import FreeCADGui as Gui
 import ImportGui
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -29,9 +30,9 @@ def get_ideamaker_path() -> Path:
         FileNotFoundError: If IdeaMaker could not be located.
     """
     base_dirs: list[str | None] = [
-        os.environ.get("PROGRAMFILES"),
-        os.environ.get("PROGRAMFILES(X86)"),
-        os.environ.get("LOCALAPPDATA"),
+        os.environ.get(key="PROGRAMFILES"),
+        os.environ.get(key="PROGRAMFILES(X86)"),
+        os.environ.get(key="LOCALAPPDATA"),
     ]
     suffixes: list[Path] = [
         Path("Raise3D") / "ideaMaker" / "ideaMaker.exe",
@@ -57,7 +58,7 @@ class ExportIdeaMakerCommand:
 
     def GetResources(self) -> dict[str, str]:
         return {
-            "Pixmap": Resources.icon("export2ideamaker.svg"),
+            "Pixmap": Resources.icon(path="export2ideamaker.svg"),
             "MenuText": translate(
                 "Franky",
                 "Export to IdeaMaker",

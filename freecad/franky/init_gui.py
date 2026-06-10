@@ -38,8 +38,8 @@ ExampleCommand.Install()
 ExportStepCommand.Install()
 ExportStlCommand.Install()
 Export3mfCommand.Install()
-ExportBambuStudioCommand.Install()
 ExportIdeaMakerCommand.Install()
+ExportBambuStudioCommand.Install()
 ExportOrcaSlicerCommand.Install()
 
 # Add Commands to the Gui

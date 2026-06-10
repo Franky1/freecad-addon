@@ -13,6 +13,6 @@ The addon provides the following commands, available from the **Franky** toolbar
 - **Export to STEP**: Exports the selected object(s) to STEP file(s) with a single click.
 - **Export to STL**: Exports the selected object(s) to STL file(s) with a single click.
 - **Export to 3MF**: Exports the selected object(s) to 3MF file(s) with a single click.
-- **Export to BambuStudio**: Exports the selected object(s) to STEP file(s) and opens them in BambuStudio Slicer.
+- **Export to Bambu Studio**: Exports the selected object(s) to STEP file(s) and opens them in Bambu Studio Slicer.
 - **Export to IdeaMaker**: Exports the selected object(s) to STEP file(s) and opens them in IdeaMaker Slicer.
-- **Export to OrcaSlicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.
+- **Export to Orca Slicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.

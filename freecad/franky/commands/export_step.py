@@ -6,9 +6,10 @@ import tempfile
 from pathlib import Path
 from typing import ClassVar
 
-import FreeCAD as App
 import FreeCADGui as Gui
 import ImportGui
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -27,7 +28,7 @@ class ExportStepCommand:
 
     def GetResources(self) -> dict[str, str]:
         return {
-            "Pixmap": Resources.icon("export2step.png"),
+            "Pixmap": Resources.icon(path="export2step.png"),
             "MenuText": translate(
                 "Franky",
                 "Export to STEP",

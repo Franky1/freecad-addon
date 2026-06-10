@@ -1,8 +1,8 @@
 # ToDo :white_check_mark:
 
-- [ ] Install into local FreeCAD Mod folder
-- [ ] Test installation and update process via Addon Manager
-- [ ] Make own toolbar and menu entries for this addon instead of using the global File menu
+- [x] Install into local FreeCAD Mod folder
+- [x] Test installation and update process via Addon Manager
+- [x] Make own toolbar and menu entries for this addon instead of using the global File menu
 - [ ] Test all export functions
 - [ ] Test functions work with multiple selected objects
 - [ ] Remove example code
@@ -15,4 +15,5 @@
 - [ ] Add Varset quick editor command
 - [ ] Add New Project quick command
 - [ ] Add documentation
+- [ ] Add translations (de_DE, fr_FR, es_ES)
 - [ ] Cleanup project

@@ -41,8 +41,8 @@ class FrankyWorkbench(Gui.Workbench):
             ExportStepCommand.Name,
             ExportStlCommand.Name,
             Export3mfCommand.Name,
-            ExportBambuStudioCommand.Name,
             ExportIdeaMakerCommand.Name,
+            ExportBambuStudioCommand.Name,
             ExportOrcaSlicerCommand.Name,
         ]
         self.appendToolbar("Franky", commands)

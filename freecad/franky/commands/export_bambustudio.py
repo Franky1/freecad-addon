@@ -8,9 +8,10 @@ import tempfile
 from pathlib import Path
 from typing import ClassVar
 
-import FreeCAD as App
 import FreeCADGui as Gui
 import ImportGui
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -23,15 +24,15 @@ SAVE_TO_TEMP: bool = False
 
 
 def get_bambustudio_path() -> Path:
-    """Return the absolute path to the BambuStudio executable.
+    """Return the absolute path to the Bambu Studio executable.
 
     Raises:
-        FileNotFoundError: If BambuStudio could not be located.
+        FileNotFoundError: If Bambu Studio could not be located.
     """
     base_dirs: list[str | None] = [
-        os.environ.get("PROGRAMFILES"),
-        os.environ.get("PROGRAMFILES(X86)"),
-        os.environ.get("LOCALAPPDATA"),
+        os.environ.get(key="PROGRAMFILES"),
+        os.environ.get(key="PROGRAMFILES(X86)"),
+        os.environ.get(key="LOCALAPPDATA"),
     ]
     suffixes: list[Path] = [
         Path("Bambu Studio") / "bambu-studio.exe",
@@ -46,11 +47,11 @@ def get_bambustudio_path() -> Path:
             if install_candidate.is_file():
                 return install_candidate
 
-    raise FileNotFoundError("Could not locate BambuStudio.exe.")
+    raise FileNotFoundError("Could not locate Bambu Studio executable.")
 
 
 class ExportBambuStudioCommand:
-    """Export the selected objects to STEP files and open them in BambuStudio."""
+    """Export the selected objects to STEP files and open them in Bambu Studio."""
 
     Name: ClassVar[str] = "Franky_Export2BambuStudio"
 
@@ -59,11 +60,11 @@ class ExportBambuStudioCommand:
             "Pixmap": Resources.icon("export2bambustudio.svg"),
             "MenuText": translate(
                 "Franky",
-                "Export to BambuStudio",
+                "Export to Bambu Studio",
             ),
             "ToolTip": translate(
                 "Franky",
-                "Export the selected objects to STEP and open them in BambuStudio",
+                "Export the selected objects to STEP and open them in Bambu Studio",
             ),
         }
 

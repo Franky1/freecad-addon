@@ -6,9 +6,10 @@ import tempfile
 from pathlib import Path
 from typing import ClassVar
 
-import FreeCAD as App
 import FreeCADGui as Gui
 import Mesh
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -27,7 +28,7 @@ class Export3mfCommand:
 
     def GetResources(self) -> dict[str, str]:
         return {
-            "Pixmap": Resources.icon("export23mf.png"),
+            "Pixmap": Resources.icon(path="export23mf.png"),
             "MenuText": translate(
                 "Franky",
                 "Export to 3MF",

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import FreeCAD as App
 
+
 class MyCoolCube:
     """
     Cool Box to demonstrate basic FPO.
@@ -34,6 +35,7 @@ class MyCoolCube:
     def execute(self, obj: App.DocumentObject) -> None:
         """Do something when doing a recomputation, this method is mandatory"""
         import Part
+
         App.Console.PrintMessage("Recompute Python Box feature\n")
         obj.Shape = Part.makeBox(obj.Length, obj.Width, obj.Height)
 
@@ -55,6 +57,7 @@ class MyCoolCube:
         # Manage Gui (ViewProvider) if available
         if App.GuiUp and hasattr(obj, "ViewObject"):
             from .example_feature_vp import MyCoolCubeViewProvider
+
             MyCoolCubeViewProvider(obj.ViewObject)
 
         obj.recompute()
