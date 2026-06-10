@@ -8,8 +8,8 @@
 
     <name>Franky</name>
     <description>Personal FreeCAD AddOn Workbench</description>
-    <version>0.2.0</version>
-    <date>2026-06-09</date>
+    <version>0.2.1</version>
+    <date>2026-06-10</date>
 
     <!--[ Ecosystem Requirements ]-->
 
@@ -32,6 +32,7 @@
     <tag>Slicer</tag>
     <tag>BambuStudio</tag>
     <tag>IdeaMaker</tag>
+    <tag>OrcaSlicer</tag>
     <tag>3D Printing</tag>
 
     <!--[ Maintainers ]-->
@@ -57,7 +58,7 @@
     <url type="repository" branch="main">https://github.com/Franky1/freecad-addon</url>
     <url type="documentation">https://github.com/Franky1/freecad-addon/tree/main/freecad/franky/resources/docs/</url>
     <url type="bugtracker">https://github.com/Franky1/freecad-addon/issues/</url>
-    <url type="readme">https://github.com/Franky1/freecad-addon/refs/heads/main/freecad/franky/resources/docs/Overview.md</url>
+    <url type="readme">https://raw.githubusercontent.com/Franky1/freecad-addon/main/freecad/franky/resources/docs/Overview.md</url>
 
     <!--[ Content ]-->
 

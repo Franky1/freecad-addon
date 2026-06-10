@@ -13,6 +13,7 @@ from .example_command import ExampleCommand
 from .export_3mf import Export3mfCommand
 from .export_bambustudio import ExportBambuStudioCommand
 from .export_ideamaker import ExportIdeaMakerCommand
+from .export_orcaslicer import ExportOrcaSlicerCommand
 from .export_step import ExportStepCommand
 from .export_stl import ExportStlCommand
 
@@ -40,6 +41,7 @@ class WorkbenchManipulator:
             {"append": Export3mfCommand.Name, "toolBar": "File"},
             {"append": ExportBambuStudioCommand.Name, "toolBar": "File"},
             {"append": ExportIdeaMakerCommand.Name, "toolBar": "File"},
+            {"append": ExportOrcaSlicerCommand.Name, "toolBar": "File"},
         ]
 
     # Optional but useful (good practice to encapsulate here)
@@ -57,7 +59,6 @@ class WorkbenchManipulator:
     def uninstall(cls) -> None:
         """Remove the workbench manipulator to the live session"""
         if App.GuiUp and cls._instance is not None:
-            cls._instance = WorkbenchManipulator()
             App.Gui.removeWorkbenchManipulator(cls._instance)
             cls._instance = None
             with suppress(Exception):

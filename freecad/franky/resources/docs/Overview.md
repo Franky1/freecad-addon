@@ -4,17 +4,15 @@
 
 Personal FreeCAD AddOn Workbench
 
-## What
+## Features
 
-This is the file configured in the `package.xml`
-manifest to be shown in the addon manager
-instead of the repository README.
+This is a personal FreeCAD AddOn Workbench that provides some useful functions I need. It is specifically tailored to my personal preferences and needs. It is not intended for general use. However, I am sharing it in case it can be useful to others or inspire them to create their own custom workbenches.
 
-## Why
+The addon provides the following commands, available from the **Franky** workbench (toolbar and menu) as well as the global **File** toolbar in any workbench:
 
-Most of the information of the repository README
-isn't relevant to the users of your addon, they are
-for the most part 2 separate audiences.
-
-Both should be served adequately and not
-overloaded with information they don't need.
+- **Export to STEP**: Exports the selected object(s) to STEP file(s) with a single click.
+- **Export to STL**: Exports the selected object(s) to STL file(s) with a single click.
+- **Export to 3MF**: Exports the selected object(s) to 3MF file(s) with a single click.
+- **Export to BambuStudio**: Exports the selected object(s) to STEP file(s) and opens them in BambuStudio Slicer.
+- **Export to IdeaMaker**: Exports the selected object(s) to STEP file(s) and opens them in IdeaMaker Slicer.
+- **Export to OrcaSlicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.

@@ -40,6 +40,7 @@ src = ["freecad"]
 [tool.ruff.lint]
 unfixable = [
     "F401", # keep unused imports; do not auto-delete on fix
+    "E402", # keep imports not at top of file; do not auto-move on fix
 ]
 
 [tool.ruff.format]

@@ -13,6 +13,7 @@ from .commands import (
     Export3mfCommand,
     ExportBambuStudioCommand,
     ExportIdeaMakerCommand,
+    ExportOrcaSlicerCommand,
     ExportStepCommand,
     ExportStlCommand,
 )
@@ -42,6 +43,7 @@ class FrankyWorkbench(Gui.Workbench):
             Export3mfCommand.Name,
             ExportBambuStudioCommand.Name,
             ExportIdeaMakerCommand.Name,
+            ExportOrcaSlicerCommand.Name,
         ]
         self.appendToolbar("Franky", commands)
         self.appendMenu("Franky", commands)
