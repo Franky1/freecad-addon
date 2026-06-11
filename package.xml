@@ -72,7 +72,7 @@
             <classname>FrankyWorkbench</classname>
             <description>Personal FreeCAD AddOn</description>
             <subdirectory>./</subdirectory>
-            <icon>freecad/franky/resources/icons/franky-wb.svg</icon>
+            <icon>freecad/franky/resources/icons/franky.svg</icon>
         </workbench>
 
     </content>
