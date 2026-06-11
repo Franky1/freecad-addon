@@ -15,7 +15,6 @@ Keep this file fast - it runs on every FreeCAD GUI startup.
 """
 
 from .commands import (
-                       ExampleCommand,
                        Export3mfCommand,
                        ExportBambuStudioCommand,
                        ExportIdeaMakerCommand,
@@ -34,7 +33,6 @@ Resources.gui_register_icons()
 Resources.gui_register_translations()
 
 # Install commands
-ExampleCommand.Install()
 ExportStepCommand.Install()
 ExportStlCommand.Install()
 Export3mfCommand.Install()

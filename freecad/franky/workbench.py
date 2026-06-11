@@ -9,7 +9,6 @@ import FreeCAD as App
 translate = App.Qt.translate
 
 from .commands import (
-    ExampleCommand,
     Export3mfCommand,
     ExportBambuStudioCommand,
     ExportIdeaMakerCommand,
@@ -37,7 +36,6 @@ class FrankyWorkbench(Gui.Workbench):
         App.Console.PrintMessage("Franky Workbench initialized\n")
         # Adding menus and toolbars when the Workbench is active (example)
         commands: list[str] = [
-            ExampleCommand.Name,
             ExportStepCommand.Name,
             ExportStlCommand.Name,
             Export3mfCommand.Name,
@@ -57,7 +55,7 @@ class FrankyWorkbench(Gui.Workbench):
     def ContextMenu(self, recipient: str) -> None:
         App.Console.PrintMessage("Franky Workbench context menu\n")
         # Adding context menus when the Workbench is active (example)
-        self.appendContextMenu("", [ExampleCommand.Name])
+        self.appendContextMenu("", [ExportStepCommand.Name])
 
     @classmethod
     def Install(cls) -> None:
