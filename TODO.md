@@ -8,6 +8,7 @@
 - [ ] Add proper error handling for unsupported object types
 - [ ] Delete previous export files with the same name before writing new ones
 - [ ] Make commands more robust against user errors
+- [ ] Add Screenshot to Clipboard command
 - [ ] Add Varset quick editor command
 - [ ] Add New Project quick command
 - [ ] Add documentation
