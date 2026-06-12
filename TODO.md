@@ -17,3 +17,12 @@
 - [ ] Add documentation
 - [ ] Add translations (de_DE, fr_FR, es_ES)
 - [ ] Cleanup project
+
+## Resources :books:
+
+- SVG icons for toolbar and menu entries:
+  - <https://www.svgrepo.com/>
+  - <https://allsvgicons.com/>
+  - <https://www.flaticon.com/>
+  - <https://iconbuddy.com/>
+  - <https://uxwing.com/>
