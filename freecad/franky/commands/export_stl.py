@@ -13,6 +13,7 @@ import FreeCAD as App
 translate = App.Qt.translate
 
 from ..resources import Resources
+from .selection import contains_only_bodies
 
 class ExportStlCommand:
     """Export the selected objects to STL files."""
@@ -43,6 +44,10 @@ class ExportStlCommand:
             App.Console.PrintError("No objects selected.\n")
             return
 
+        if not contains_only_bodies(objects=objects_to_export):
+            App.Console.PrintError("Please select only Body objects before exporting.\n")
+            return
+
         if not doc.FileName:
             App.Console.PrintError("Please save the document before exporting.\n")
             return
@@ -61,7 +66,8 @@ class ExportStlCommand:
             App.Console.PrintMessage(f"Exported {file_path}\n")
 
     def IsActive(self) -> bool:
-        return bool(App.ActiveDocument and Gui.Selection.getSelection())
+        objects_to_export = Gui.Selection.getSelection()
+        return bool(App.ActiveDocument and objects_to_export and contains_only_bodies(objects=objects_to_export))
 
     @classmethod
     def Install(cls) -> None:

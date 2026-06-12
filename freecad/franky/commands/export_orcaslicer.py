@@ -7,14 +7,15 @@ import subprocess
 from pathlib import Path
 from typing import ClassVar
 
+import FreeCAD as App
 import FreeCADGui as Gui
 import ImportGui
-
-import FreeCAD as App
 
 translate = App.Qt.translate
 
 from ..resources import Resources
+from .selection import contains_only_bodies
+
 
 def get_orcaslicer_path() -> Path:
     """Return the absolute path to the OrcaSlicer executable.
@@ -28,8 +29,7 @@ def get_orcaslicer_path() -> Path:
         os.environ.get(key="LOCALAPPDATA"),
     ]
     suffixes: list[Path] = [
-        Path("OrcaSlicer") / "OrcaSlicer.exe",
-        Path("OrcaSlicer-App") / "OrcaSlicer.exe",
+        Path("OrcaSlicer") / "orca-slicer.exe",
     ]
 
     for base_dir in base_dirs:
@@ -73,6 +73,10 @@ class ExportOrcaSlicerCommand:
             App.Console.PrintError("No objects selected.\n")
             return
 
+        if not contains_only_bodies(objects=objects_to_export):
+            App.Console.PrintError("Please select only Body objects before exporting.\n")
+            return
+
         if not doc.FileName:
             App.Console.PrintError("Please save the document before exporting.\n")
             return
@@ -101,7 +105,8 @@ class ExportOrcaSlicerCommand:
         subprocess.Popen(args=slicer_args)
 
     def IsActive(self) -> bool:
-        return bool(App.ActiveDocument and Gui.Selection.getSelection())
+        objects_to_export = Gui.Selection.getSelection()
+        return bool(App.ActiveDocument and objects_to_export and contains_only_bodies(objects=objects_to_export))
 
     @classmethod
     def Install(cls) -> None:

@@ -3,7 +3,7 @@
 """Command to export the selected objects to 3MF files."""
 
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -12,6 +12,8 @@ import Mesh
 translate = App.Qt.translate
 
 from ..resources import Resources
+from .selection import contains_only_bodies
+
 
 class Export3mfCommand:
     """Export the selected objects to 3MF files."""
@@ -37,9 +39,13 @@ class Export3mfCommand:
             App.Console.PrintError("No active document.\n")
             return
 
-        objects_to_export = Gui.Selection.getSelection()
+        objects_to_export: list[Any] = Gui.Selection.getSelection()
         if not objects_to_export:
             App.Console.PrintError("No objects selected.\n")
+            return
+
+        if not contains_only_bodies(objects=objects_to_export):
+            App.Console.PrintError("Please select only Body objects before exporting.\n")
             return
 
         if not doc.FileName:
@@ -60,7 +66,8 @@ class Export3mfCommand:
             App.Console.PrintMessage(f"Exported {file_path}\n")
 
     def IsActive(self) -> bool:
-        return bool(App.ActiveDocument and Gui.Selection.getSelection())
+        objects_to_export: list[Any] = Gui.Selection.getSelection()
+        return bool(App.ActiveDocument and objects_to_export and contains_only_bodies(objects=objects_to_export))
 
     @classmethod
     def Install(cls) -> None:
