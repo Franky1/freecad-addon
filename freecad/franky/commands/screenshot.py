@@ -7,10 +7,58 @@ from typing import Any, ClassVar
 
 import FreeCAD as App
 import FreeCADGui as Gui
+from PySide import QtGui
 
 translate = App.Qt.translate
 
 from ..resources import Resources
+
+BACKGROUND_TOLERANCE: int = 8
+CROP_PADDING: int = 8
+
+
+def color_distance(first: QtGui.QColor, second: QtGui.QColor) -> int:
+    """Return the largest channel difference between two colors."""
+    return max(
+        abs(first.red() - second.red()),
+        abs(first.green() - second.green()),
+        abs(first.blue() - second.blue()),
+        abs(first.alpha() - second.alpha()),
+    )
+
+
+def crop_to_content(file_path: Path, *, tolerance: int = BACKGROUND_TOLERANCE, padding: int = CROP_PADDING) -> bool:
+    """Trim background-colored pixels from the screenshot edges."""
+    image = QtGui.QImage(str(file_path))
+    if image.isNull():
+        return False
+
+    background = image.pixelColor(0, 0)
+    left = image.width()
+    top = image.height()
+    right = -1
+    bottom = -1
+
+    for y in range(image.height()):
+        for x in range(image.width()):
+            if color_distance(image.pixelColor(x, y), background) <= tolerance:
+                continue
+
+            left = min(left, x)
+            top = min(top, y)
+            right = max(right, x)
+            bottom = max(bottom, y)
+
+    if right < left or bottom < top:
+        return False
+
+    left = max(left - padding, 0)
+    top = max(top - padding, 0)
+    right = min(right + padding, image.width() - 1)
+    bottom = min(bottom + padding, image.height() - 1)
+
+    cropped = image.copy(left, top, right - left + 1, bottom - top + 1)
+    return bool(cropped.save(str(file_path), "PNG"))
 
 
 class ScreenshotCommand:
@@ -55,6 +103,7 @@ class ScreenshotCommand:
             if file_path.exists():
                 file_path.unlink()
             view.saveImage(str(file_path), width, height, "Current")
+            crop_to_content(file_path=file_path)
         except Exception as error:
             App.Console.PrintError(f"Could not capture screenshot: {error}\n")
             return

@@ -2,9 +2,8 @@
 
 """FreeCAD Workbench."""
 
-import FreeCADGui as Gui
-
 import FreeCAD as App
+import FreeCADGui as Gui
 
 translate = App.Qt.translate
 
@@ -46,6 +45,7 @@ class FrankyWorkbench(Gui.Workbench):
             ScreenshotCommand.Name,
         ]
         self.appendMenu("Franky", commands)
+        self.appendToolbar("Franky", commands)
 
     def Activated(self) -> None:
         App.Console.PrintMessage("Franky Workbench activated\n")

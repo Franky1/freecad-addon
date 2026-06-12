@@ -9,19 +9,19 @@ from typing import ClassVar
 
 import FreeCAD as App
 
+from .example_command import ExampleCommand
 from .export_3mf import Export3mfCommand
 from .export_bambustudio import ExportBambuStudioCommand
 from .export_ideamaker import ExportIdeaMakerCommand
 from .export_orcaslicer import ExportOrcaSlicerCommand
 from .export_step import ExportStepCommand
 from .export_stl import ExportStlCommand
-from .screenshot import ScreenshotCommand
 
 
 class WorkbenchManipulator:
     """Adds/Remove Commands to Gui"""
 
-    _instance: ClassVar[WorkbenchManipulator | None] = None
+    _instance: ClassVar[WorkbenchManipulator | None]  = None
 
     def modifyMenuBar(self) -> list[dict[str, str]]:
         """Add commands to menus."""
@@ -33,15 +33,7 @@ class WorkbenchManipulator:
 
     def modifyToolBars(self) -> list[dict[str, str]]:
         """Add commands to toolbars."""
-        return [
-            {"append": ExportStepCommand.Name, "toolBar": "Franky"},
-            {"append": ExportStlCommand.Name, "toolBar": "Franky"},
-            {"append": Export3mfCommand.Name, "toolBar": "Franky"},
-            {"append": ExportIdeaMakerCommand.Name, "toolBar": "Franky"},
-            {"append": ExportBambuStudioCommand.Name, "toolBar": "Franky"},
-            {"append": ExportOrcaSlicerCommand.Name, "toolBar": "Franky"},
-            {"append": ScreenshotCommand.Name, "toolBar": "Franky"},
-        ]
+        return []
 
     # Optional but useful (good practice to encapsulate here)
     @classmethod
