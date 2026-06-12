@@ -21,6 +21,7 @@ from .commands import (
                        ExportOrcaSlicerCommand,
                        ExportStepCommand,
                        ExportStlCommand,
+                       ScreenshotCommand,
                        WorkbenchManipulator,
 )
 from .resources import Resources
@@ -39,6 +40,7 @@ Export3mfCommand.Install()
 ExportIdeaMakerCommand.Install()
 ExportBambuStudioCommand.Install()
 ExportOrcaSlicerCommand.Install()
+ScreenshotCommand.Install()
 
 # Add Commands to the Gui
 WorkbenchManipulator.install()

@@ -15,6 +15,7 @@ from .commands import (
     ExportOrcaSlicerCommand,
     ExportStepCommand,
     ExportStlCommand,
+    ScreenshotCommand,
 )
 from .resources import Resources
 
@@ -42,8 +43,8 @@ class FrankyWorkbench(Gui.Workbench):
             ExportIdeaMakerCommand.Name,
             ExportBambuStudioCommand.Name,
             ExportOrcaSlicerCommand.Name,
+            ScreenshotCommand.Name,
         ]
-        self.appendToolbar("Franky", commands)
         self.appendMenu("Franky", commands)
 
     def Activated(self) -> None:

@@ -56,6 +56,7 @@ The addon provides the following commands, available from the **Franky** workben
 | <img src="freecad/franky/resources/icons/export2ideamaker.svg" alt="Export to IdeaMaker icon" width="24"> | **Export to IdeaMaker** | Exports the selected object(s) to STEP file(s) and opens them in [IdeaMaker](https://www.raise3d.com/ideamaker/). |
 | <img src="freecad/franky/resources/icons/export2bambustudio.svg" alt="Export to Bambu Studio icon" width="24"> | **Export to Bambu Studio** | Exports the selected object(s) to STEP file(s) and opens them in [Bambu Studio](https://bambulab.com/en/download/studio). |
 | <img src="freecad/franky/resources/icons/export2orcaslicer.svg" alt="Export to OrcaSlicer icon" width="24"> | **Export to OrcaSlicer** | Exports the selected object(s) to STEP file(s) and opens them in [OrcaSlicer](https://www.orcaslicer.com/). |
+| <img src="freecad/franky/resources/icons/camera.svg" alt="Camera icon" width="24"> | **Screenshot** | Quickly capture a screenshot of the current view. |
 | <img src="freecad/franky/resources/icons/brackets.svg" alt="VarSet Quick Edit icon" width="24"> | **VarSet Quick Edit** | Quickly edit variable sets. |
 | <img src="freecad/franky/resources/icons/newproject.svg" alt="New Project icon" width="24"> | **New Project** | Create a new project with predefined structure and settings. |
 

@@ -16,6 +16,7 @@ The addon provides the following commands, available from the **Franky** toolbar
 - **Export to IdeaMaker**: Exports the selected object(s) to STEP file(s) and opens them in IdeaMaker Slicer.
 - **Export to Bambu Studio**: Exports the selected object(s) to STEP file(s) and opens them in Bambu Studio Slicer.
 - **Export to Orca Slicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.
+- **Screenshot**: Quickly capture a screenshot of the current view.
 - **VarSet Quick Edit**: Quickly edit variable sets.
 - **New Project**: Create a new project with predefined structure and settings.
 - ... and more to come!
