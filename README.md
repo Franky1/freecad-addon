@@ -53,9 +53,9 @@ The addon provides the following commands, available from the **Franky** workben
 | <img src="freecad/franky/resources/icons/export2step.png" alt="Export to STEP icon" width="24"> | **Export to STEP** | Exports the selected object(s) to STEP file(s) with a single click. |
 | <img src="freecad/franky/resources/icons/export2stl.png" alt="Export to STL icon" width="24"> | **Export to STL** | Exports the selected object(s) to STL file(s) with a single click. |
 | <img src="freecad/franky/resources/icons/export23mf.svg" alt="Export to 3MF icon" width="24"> | **Export to 3MF** | Exports the selected object(s) to 3MF file(s) with a single click. |
-| <img src="assets/export2ideamaker.png" alt="Export to IdeaMaker icon" width="24"> | **Export to IdeaMaker** | Exports the selected object(s) to STEP file(s) and opens them in [IdeaMaker](https://www.raise3d.com/ideamaker/). |
-| <img src="assets/export2bambustudio.png" alt="Export to Bambu Studio icon" width="24"> | **Export to Bambu Studio** | Exports the selected object(s) to STEP file(s) and opens them in [Bambu Studio](https://bambulab.com/en/download/studio). |
-| <img src="assets/export2orcaslicer.png" alt="Export to OrcaSlicer icon" width="24"> | **Export to OrcaSlicer** | Exports the selected object(s) to STEP file(s) and opens them in [OrcaSlicer](https://www.orcaslicer.com/). |
+| <img src="freecad/franky/resources/icons/export2ideamaker.svg" alt="Export to IdeaMaker icon" width="24"> | **Export to IdeaMaker** | Exports the selected object(s) to STEP file(s) and opens them in [IdeaMaker](https://www.raise3d.com/ideamaker/). |
+| <img src="freecad/franky/resources/icons/export2bambustudio.svg" alt="Export to Bambu Studio icon" width="24"> | **Export to Bambu Studio** | Exports the selected object(s) to STEP file(s) and opens them in [Bambu Studio](https://bambulab.com/en/download/studio). |
+| <img src="freecad/franky/resources/icons/export2orcaslicer.svg" alt="Export to OrcaSlicer icon" width="24"> | **Export to OrcaSlicer** | Exports the selected object(s) to STEP file(s) and opens them in [OrcaSlicer](https://www.orcaslicer.com/). |
 
 Each command requires an active, saved document with one or more objects selected. A separate file is written per selected object, named `<document>-<label>.<ext>` (where `<ext>` is `step`, `stl`, or `3mf`), next to the FreeCAD document.
 
