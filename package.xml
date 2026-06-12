@@ -8,8 +8,8 @@
 
     <name>Franky</name>
     <description>Personal FreeCAD AddOn</description>
-    <version>0.2.4</version>
-    <date>2026-06-11</date>
+    <version>0.2.5</version>
+    <date>2026-06-12</date>
 
     <!--[ Ecosystem Requirements ]-->
 
@@ -18,7 +18,6 @@
     <pythonmin>3.10</pythonmin>
 
     <!--[ Dependencies ]-->
-    <depend type="python">pillow</depend>
 
     <!--NOTE: Examples only, this Template does *not* actually require these -->
     <!--

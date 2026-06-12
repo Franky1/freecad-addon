@@ -2,24 +2,16 @@
 
 """Command to export the selected objects to 3MF files."""
 
-import tempfile
 from pathlib import Path
 from typing import ClassVar
 
+import FreeCAD as App
 import FreeCADGui as Gui
 import Mesh
-
-import FreeCAD as App
 
 translate = App.Qt.translate
 
 from ..resources import Resources
-
-# Where to write the 3MF files:
-#   False -> next to the FreeCAD document (.FCStd)
-#   True  -> in the system temp folder
-SAVE_TO_TEMP: bool = False
-
 
 class Export3mfCommand:
     """Export the selected objects to 3MF files."""
@@ -28,7 +20,7 @@ class Export3mfCommand:
 
     def GetResources(self) -> dict[str, str]:
         return {
-            "Pixmap": Resources.icon(path="export23mf.png"),
+            "Pixmap": Resources.icon(path="export23mf.svg"),
             "MenuText": translate(
                 "Franky",
                 "Export to 3MF",
@@ -58,7 +50,7 @@ class Export3mfCommand:
 
         doc_path = Path(doc.FileName)
         filename: str = doc_path.stem
-        output_dir: Path = Path(tempfile.gettempdir()) if SAVE_TO_TEMP else doc_path.parent
+        output_dir: Path = doc_path.parent
 
         for obj in objects_to_export:
             file_path: Path = output_dir / f"{filename}-{obj.Label}.3mf"

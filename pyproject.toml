@@ -17,7 +17,7 @@ license = "LGPL-2.1-or-later"
 license-files = ["LICENSE-Code", "LICENSE-Assets"]
 maintainers = [{ name = "Franky1", email = "Franky1@users.noreply.github.com" }]
 requires-python = ">=3.10"
-dependencies = ["pillow"]
+# dependencies = ["pillow"]
 
 [dependency-groups]
 dev = ["PySide6", "ruff", "mypy", "pylint", "freecad-stubs"]

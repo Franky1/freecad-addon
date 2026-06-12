@@ -4,7 +4,6 @@
 
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import ClassVar
 
@@ -16,12 +15,6 @@ import FreeCAD as App
 translate = App.Qt.translate
 
 from ..resources import Resources
-
-# Where to write the intermediate STEP files:
-#   False -> next to the FreeCAD document (.FCStd)
-#   True  -> in the system temp folder
-SAVE_TO_TEMP: bool = False
-
 
 def get_ideamaker_path() -> Path:
     """Return the absolute path to the IdeaMaker executable.
@@ -96,7 +89,7 @@ class ExportIdeaMakerCommand:
 
         doc_path = Path(doc.FileName)
         filename: str = doc_path.stem
-        output_dir: Path = Path(tempfile.gettempdir()) if SAVE_TO_TEMP else doc_path.parent
+        output_dir: Path = doc_path.parent
 
         for obj in objects_to_export:
             file_path: Path = output_dir / f"{filename}-{obj.Label}.step"
