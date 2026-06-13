@@ -8,6 +8,7 @@ import FreeCADGui as Gui
 translate = App.Qt.translate
 
 from .commands import (
+    ClipboardCommand,
     Export3mfCommand,
     ExportBambuStudioCommand,
     ExportIdeaMakerCommand,
@@ -43,6 +44,7 @@ class FrankyWorkbench(Gui.Workbench):
             ExportBambuStudioCommand.Name,
             ExportOrcaSlicerCommand.Name,
             ScreenshotCommand.Name,
+            ClipboardCommand.Name,
         ]
         self.appendMenu("Franky", commands)
         self.appendToolbar("Franky", commands)

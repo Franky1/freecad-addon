@@ -50,6 +50,7 @@ Good practices:
 """
 
 from .example_command import ExampleCommand as ExampleCommand
+from .clipboard import ClipboardCommand as ClipboardCommand
 from .export_3mf import Export3mfCommand as Export3mfCommand
 from .export_bambustudio import ExportBambuStudioCommand as ExportBambuStudioCommand
 from .export_ideamaker import ExportIdeaMakerCommand as ExportIdeaMakerCommand

@@ -98,5 +98,6 @@ disable = [
     "C0301", # line-too-long
     "C0413", # wrong-import-position
     "R0903", # too-few-public-methods
+    "R0914", # too-many-locals
     "W0718", # catching too general exception Exception (for CLI error handling)
 ]
