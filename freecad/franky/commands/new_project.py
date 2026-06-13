@@ -16,11 +16,11 @@ Command to create a new FreeCAD project with a user-friendly PySide Widget, pre-
         - Description input field, which can be used by the user to write a description for each Body.
     - For each given Body name, create a subfolder starting with "XX_" to ensure it appears in the correct order in the project tree.
     - The "XX_" prefix is automatically added to the given name, starting with "01_" for the first Body, "02_" for the second, and so on, so the user only needs to give the name of the Body.
-    - Within each Body folder, creates an empty Body and its Coordinate System, name the Body according to the given Body name, with the "XX_" prefix.
-    - Within each Body folder, creates an empty sketch within the Body, name the sketch according to the given Body name, with the "XX_" prefix, and places it on the selected "Sketch Plane" if given.
-    - Within each Body folder, creates an empty Datum Plane, name the Datum Plane according to the given Body name, with the "XX_" prefix, and places it on the selected "Datum Plane" if given.
-    - Within each Body folder, creates an empty Datum Line, name the Datum Line according to the given Body name, with the "XX_" prefix, and places it on the selected "Datum Line" if given.
-    - Within each Body folder, creates an empty Datum Point, name the Datum Point according to the given Body name, with the "XX_" prefix, and places it on the selected "Datum Point" if given.
+    - Within each Body folder, creates an empty Body, named "XX_Body_Name".
+    - Within each Body folder, creates an empty sketch within the Body, named "XX_Sketch_Name", only when a sketch plane is selected.
+    - Within each Body folder, creates an empty Datum Plane, named "XX_DatumPlane_Name", and places it on the selected "Datum Plane" if given.
+    - Within each Body folder, creates an empty Datum Line, named "XX_DatumLine_Name", and places it on the selected "Datum Line" if given.
+    - Within each Body folder, creates an empty Datum Point, named "XX_DatumPoint_Name", if selected.
     - Only creates as many Body folders as the user gives names for, so if the user only gives 3 names, only 3 Body folders are created.
 - Widget has a "Create Project" button, which creates the project, saves it, and closes the widget.
 - Widget has a "Cancel" button, which closes the widget without creating a project.
@@ -94,6 +94,9 @@ class BodyTemplate:
     @property
     def ordered_label(self) -> str:
         return f"{self.index:02d}_{self.name}"
+
+    def object_label(self, object_type: str) -> str:
+        return f"{self.index:02d}_{object_type}_{self.name}"
 
 
 def default_save_path() -> Path:
@@ -272,54 +275,52 @@ def create_body_objects(document: Any, template: BodyTemplate) -> None:
     """Create one ordered body group and its requested starter objects."""
     body_group = add_group(document=document, label=template.ordered_label)
 
-    body = document.addObject("PartDesign::Body", f"{safe_object_name(template.ordered_label)}_Body")
-    body.Label = template.ordered_label
+    body_label = template.object_label(object_type="Body")
+    body = document.addObject("PartDesign::Body", safe_object_name(body_label))
+    body.Label = body_label
     set_description(obj=body, description=template.description)
     add_to_group(group=body_group, obj=body)
 
-    coordinate_system = add_body_object(
-        body=body,
-        type_id="PartDesign::CoordinateSystem",
-        name=f"{template.ordered_label}_CoordinateSystem",
-        label=f"{template.ordered_label}_CoordinateSystem",
-    )
-    set_description(obj=coordinate_system, description=template.description)
-
-    sketch = add_body_object(
-        body=body,
-        type_id="Sketcher::SketchObject",
-        name=f"{template.ordered_label}_Sketch",
-        label=f"{template.ordered_label}_Sketch",
-    )
-    set_description(obj=sketch, description=template.description)
-    place_on_plane(obj=sketch, body=body, plane=template.sketch_plane)
+    if template.sketch_plane != "None":
+        sketch_label = template.object_label(object_type="Sketch")
+        sketch = add_body_object(
+            body=body,
+            type_id="Sketcher::SketchObject",
+            name=sketch_label,
+            label=sketch_label,
+        )
+        set_description(obj=sketch, description=template.description)
+        place_on_plane(obj=sketch, body=body, plane=template.sketch_plane)
 
     if template.datum_plane != "None":
+        datum_plane_label = template.object_label(object_type="DatumPlane")
         datum_plane = add_body_object(
             body=body,
             type_id="PartDesign::Plane",
-            name=f"{template.ordered_label}_DatumPlane",
-            label=f"{template.ordered_label}_DatumPlane",
+            name=datum_plane_label,
+            label=datum_plane_label,
         )
         set_description(obj=datum_plane, description=template.description)
         place_on_plane(obj=datum_plane, body=body, plane=template.datum_plane)
 
     if template.datum_line != "None":
+        datum_line_label = template.object_label(object_type="DatumLine")
         datum_line = add_body_object(
             body=body,
             type_id="PartDesign::Line",
-            name=f"{template.ordered_label}_DatumLine",
-            label=f"{template.ordered_label}_DatumLine",
+            name=datum_line_label,
+            label=datum_line_label,
         )
         set_description(obj=datum_line, description=template.description)
         place_on_axis(obj=datum_line, body=body, axis=template.datum_line)
 
     if template.create_datum_point:
+        datum_point_label = template.object_label(object_type="DatumPoint")
         datum_point = add_body_object(
             body=body,
             type_id="PartDesign::Point",
-            name=f"{template.ordered_label}_DatumPoint",
-            label=f"{template.ordered_label}_DatumPoint",
+            name=datum_point_label,
+            label=datum_point_label,
         )
         set_description(obj=datum_point, description=template.description)
 
