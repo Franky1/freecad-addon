@@ -31,12 +31,13 @@ PROPERTY_TYPES: tuple[str, ...] = (
     "App::PropertyPercent",
 )
 DEFAULT_NEW_VARIABLE_TYPE: str = "App::PropertyLength"
-LABEL_COLUMN: int = 0
-VALUE_COLUMN: int = 1
-EXPRESSION_COLUMN: int = 2
-TYPE_COLUMN: int = 3
-TOOLTIP_COLUMN: int = 4
-COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int] = (160, 160, 260, 180, 280)
+GROUP_COLUMN: int = 0
+LABEL_COLUMN: int = 1
+VALUE_COLUMN: int = 2
+EXPRESSION_COLUMN: int = 3
+TYPE_COLUMN: int = 4
+TOOLTIP_COLUMN: int = 5
+COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int] = (140, 160, 160, 260, 180, 280)
 EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (217, 122, 31)
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
@@ -203,6 +204,24 @@ def get_property_expression(obj: Any, property_name: str) -> str:
     return ""
 
 
+def set_property_expression(obj: Any, property_name: str, expression: str) -> None:
+    """Set or clear a FreeCAD expression on a property."""
+    set_expression = getattr(obj, "setExpression", None)
+    if not callable(set_expression):
+        msg = "This variable set does not support expressions."
+        raise RuntimeError(msg)
+
+    expression_text = expression.strip()
+    if expression_text:
+        set_expression(property_name, expression_text)
+        return
+
+    try:
+        set_expression(property_name, None)
+    except TypeError:
+        set_expression(property_name, "")
+
+
 def parse_value(type_id: str, text: str) -> Any:
     """Parse text from the editor into a value suitable for a FreeCAD property."""
     stripped = text.strip()
@@ -280,9 +299,10 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.varset_combo.currentIndexChanged.connect(self._selected_varset_changed)
 
         self.table = QtWidgets.QTableWidget(parent=self)
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(
             [
+                translate("Franky", "Group"),
                 translate("Franky", "Label"),
                 translate("Franky", "VarSet Value"),
                 translate("Franky", "Expression"),
@@ -360,11 +380,12 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             self.table.setRowCount(len(self.variables) + 1)
             for row, variable in enumerate(self.variables):
                 expression = get_property_expression(obj=varset, property_name=variable.name)
+                self._set_text_item(row=row, column=GROUP_COLUMN, text=variable.group)
                 self._set_text_item(row=row, column=LABEL_COLUMN, text=variable.name)
                 self._set_value_item(
                     row=row, text=self._property_value_text(varset, variable.name), expression=expression
                 )
-                self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression, editable=False)
+                self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
                 self._set_type_combo(row=row, variable=variable)
                 self._set_text_item(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
 
@@ -375,14 +396,22 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
     def _set_text_item(self, row: int, column: int, text: str, editable: bool = True) -> None:
         item = QtWidgets.QTableWidgetItem(text)
+        self._set_item_editable(item=item, editable=editable)
+        self.table.setItem(row, column, item)
+
+    def _set_item_editable(self, item: Any, editable: bool) -> None:
         if editable:
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
         else:
             item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-        self.table.setItem(row, column, item)
+
+    def _set_value_editable(self, row: int, editable: bool) -> None:
+        item = self.table.item(row, VALUE_COLUMN)
+        if item is not None:
+            self._set_item_editable(item=item, editable=editable)
 
     def _set_value_item(self, row: int, text: str, expression: str) -> None:
-        self._set_text_item(row=row, column=VALUE_COLUMN, text=text)
+        self._set_text_item(row=row, column=VALUE_COLUMN, text=text, editable=not expression)
         item = self.table.item(row, VALUE_COLUMN)
         if item is None or not expression:
             return
@@ -397,7 +426,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.loading = True
         try:
             self._set_value_item(row=row, text=value_text, expression=expression)
-            self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression, editable=False)
+            self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
         finally:
             self.loading = False
 
@@ -415,9 +444,10 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.table.setCellWidget(row, TYPE_COLUMN, combo)
 
     def _set_new_variable_row(self, row: int) -> None:
+        self._set_text_item(row=row, column=GROUP_COLUMN, text=self._new_variable_group())
         self._set_text_item(row=row, column=LABEL_COLUMN, text="")
         self._set_text_item(row=row, column=VALUE_COLUMN, text="")
-        self._set_text_item(row=row, column=EXPRESSION_COLUMN, text="", editable=False)
+        self._set_text_item(row=row, column=EXPRESSION_COLUMN, text="")
         variable = VariableInfo(
             name="",
             type_id=DEFAULT_NEW_VARIABLE_TYPE,
@@ -432,7 +462,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
     def _new_variable_group(self) -> str:
         if not self.variables:
-            return ""
+            return VARIABLE_GROUP
 
         return self.variables[-1].group
 
@@ -442,6 +472,42 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         except Exception:
             return ""
 
+    def _add_property_with_state(
+        self,
+        varset: Any,
+        name: str,
+        type_id: str,
+        group: str,
+        tooltip: str,
+        value: Any,
+        expression: str,
+    ) -> None:
+        varset.addProperty(type_id, name, group, tooltip)
+        set_property_value(varset, name, value)
+        if expression:
+            set_property_expression(varset, name, expression)
+
+    def _replace_property_with_state(
+        self,
+        varset: Any,
+        name: str,
+        type_id: str,
+        group: str,
+        tooltip: str,
+        value: Any,
+        expression: str,
+    ) -> None:
+        varset.removeProperty(name)
+        self._add_property_with_state(
+            varset=varset,
+            name=name,
+            type_id=type_id,
+            group=group,
+            tooltip=tooltip,
+            value=value,
+            expression=expression,
+        )
+
     def _item_changed(self, item: Any) -> None:
         if self.loading:
             return
@@ -449,14 +515,19 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         row = int(item.row())
         column = int(item.column())
         if self._is_new_variable_row(row=row):
+            self._set_value_editable(row=row, editable=not self._item_text(row=row, column=EXPRESSION_COLUMN).strip())
             self._add_variable_from_new_row(row=row)
             self._resize_to_contents()
             return
 
-        if column == LABEL_COLUMN:
+        if column == GROUP_COLUMN:
+            self._change_group(row=row, new_group=item.text().strip())
+        elif column == LABEL_COLUMN:
             self._rename_variable(row=row, new_name=item.text().strip())
         elif column == VALUE_COLUMN:
             self._change_value(row=row, text=item.text())
+        elif column == EXPRESSION_COLUMN:
+            self._change_expression(row=row, expression=item.text())
         elif column == TOOLTIP_COLUMN:
             self._change_tooltip(row=row, text=item.text())
 
@@ -482,8 +553,9 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         type_id = self._type_text(row=row)
-        group = self._new_variable_group()
+        group = self._item_text(row=row, column=GROUP_COLUMN).strip()
         value_text = self._item_text(row=row, column=VALUE_COLUMN)
+        expression = self._item_text(row=row, column=EXPRESSION_COLUMN).strip()
         tooltip = self._item_text(row=row, column=TOOLTIP_COLUMN)
 
         try:
@@ -493,8 +565,15 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         def add_variable() -> None:
-            varset.addProperty(type_id, name, group, tooltip)
-            set_property_value(varset, name, value)
+            self._add_property_with_state(
+                varset=varset,
+                name=name,
+                type_id=type_id,
+                group=group,
+                tooltip=tooltip,
+                value=value,
+                expression=expression,
+            )
 
         try:
             run_transaction(
@@ -507,6 +586,52 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         self._load_selected_varset()
+
+    def _change_group(self, row: int, new_group: str) -> None:
+        varset = self._selected_varset()
+        variable = self._variable_at(row=row)
+        if varset is None or variable is None or new_group == variable.group:
+            return
+
+        old_group = variable.group
+        old_value = varset.getPropertyByName(variable.name)
+        old_expression = get_property_expression(obj=varset, property_name=variable.name)
+        tooltip = self._item_text(row=row, column=TOOLTIP_COLUMN)
+
+        def change_group() -> None:
+            self._replace_property_with_state(
+                varset=varset,
+                name=variable.name,
+                type_id=variable.type_id,
+                group=new_group,
+                tooltip=tooltip,
+                value=old_value,
+                expression=old_expression,
+            )
+
+        try:
+            run_transaction(
+                document=self.document,
+                label=translate("Franky", "Edit VarSet variable group"),
+                action=change_group,
+            )
+        except Exception as error:
+            self._reset_text(row=row, column=GROUP_COLUMN, text=old_group)
+            self._restore_property(
+                varset=varset,
+                variable=variable,
+                type_id=variable.type_id,
+                group=old_group,
+                tooltip=variable.tooltip,
+                value=old_value,
+                expression=old_expression,
+            )
+            App.Console.PrintError(f"Could not update group for '{variable.name}': {error}\n")
+            return
+
+        variable.group = new_group
+        variable.tooltip = tooltip
+        self._reset_value_and_expression(row=row, varset=varset, variable=variable)
 
     def _rename_variable(self, row: int, new_name: str) -> None:
         varset = self._selected_varset()
@@ -543,6 +668,11 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         if varset is None or variable is None:
             return
 
+        if get_property_expression(obj=varset, property_name=variable.name):
+            self._reset_value_and_expression(row=row, varset=varset, variable=variable)
+            App.Console.PrintError(f"Clear the expression before editing the value for '{variable.name}'.\n")
+            return
+
         try:
             value = parse_value(type_id=variable.type_id, text=text)
             run_transaction(
@@ -553,6 +683,31 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         except Exception as error:
             self._reset_value_and_expression(row=row, varset=varset, variable=variable)
             App.Console.PrintError(f"Could not update variable '{variable.name}': {error}\n")
+            return
+
+        self._reset_value_and_expression(row=row, varset=varset, variable=variable)
+
+    def _change_expression(self, row: int, expression: str) -> None:
+        varset = self._selected_varset()
+        variable = self._variable_at(row=row)
+        if varset is None or variable is None:
+            return
+
+        expression_text = expression.strip()
+        old_expression = get_property_expression(obj=varset, property_name=variable.name)
+        if expression_text == old_expression:
+            self._reset_value_and_expression(row=row, varset=varset, variable=variable)
+            return
+
+        try:
+            run_transaction(
+                document=self.document,
+                label=translate("Franky", "Edit VarSet variable expression"),
+                action=lambda: set_property_expression(varset, variable.name, expression_text),
+            )
+        except Exception as error:
+            self._reset_value_and_expression(row=row, varset=varset, variable=variable)
+            App.Console.PrintError(f"Could not update expression for '{variable.name}': {error}\n")
             return
 
         self._reset_value_and_expression(row=row, varset=varset, variable=variable)
@@ -601,11 +756,18 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         old_type_id = variable.type_id
         old_value = varset.getPropertyByName(variable.name)
+        old_expression = get_property_expression(obj=varset, property_name=variable.name)
 
         def change_type() -> None:
-            varset.removeProperty(variable.name)
-            varset.addProperty(type_id, variable.name, variable.group, tooltip)
-            set_property_value(varset, variable.name, value)
+            self._replace_property_with_state(
+                varset=varset,
+                name=variable.name,
+                type_id=type_id,
+                group=variable.group,
+                tooltip=tooltip,
+                value=value,
+                expression=old_expression,
+            )
 
         try:
             run_transaction(
@@ -615,7 +777,15 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             )
         except Exception as error:
             self._reset_type(row=row, type_id=old_type_id)
-            self._restore_property(varset=varset, variable=variable, old_type_id=old_type_id, old_value=old_value)
+            self._restore_property(
+                varset=varset,
+                variable=variable,
+                type_id=old_type_id,
+                group=variable.group,
+                tooltip=variable.tooltip,
+                value=old_value,
+                expression=old_expression,
+            )
             App.Console.PrintError(f"Could not change type for '{variable.name}': {error}\n")
             return
 
@@ -624,13 +794,29 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self._reset_value_and_expression(row=row, varset=varset, variable=variable)
         self._resize_to_contents()
 
-    def _restore_property(self, varset: Any, variable: VariableInfo, old_type_id: str, old_value: Any) -> None:
+    def _restore_property(
+        self,
+        varset: Any,
+        variable: VariableInfo,
+        type_id: str,
+        group: str,
+        tooltip: str,
+        value: Any,
+        expression: str,
+    ) -> None:
         if variable.name in getattr(varset, "PropertiesList", []):
             return
 
         try:
-            varset.addProperty(old_type_id, variable.name, variable.group, variable.tooltip)
-            set_property_value(varset, variable.name, old_value)
+            self._add_property_with_state(
+                varset=varset,
+                name=variable.name,
+                type_id=type_id,
+                group=group,
+                tooltip=tooltip,
+                value=value,
+                expression=expression,
+            )
         except Exception as error:
             App.Console.PrintError(f"Could not restore variable '{variable.name}': {error}\n")
 

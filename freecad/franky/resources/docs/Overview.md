@@ -2,7 +2,7 @@
 
 # Franky
 
-Personal FreeCAD AddOn Workbench Version 0.2.12
+Personal FreeCAD AddOn Workbench Version 0.2.13
 
 ## Features
 
@@ -18,6 +18,6 @@ The addon provides the following commands, available from the **Franky** toolbar
 - **Export to Orca Slicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.
 - **Screenshot**: Quickly capture a screenshot of the current view and save it as a PNG file.
 - **Clipboard**: Quickly capture a screenshot of the current view and copy it to the clipboard.
-- **VarSet Quick Editor**: Quickly edit variable sets in a more user-friendly way than the default FreeCAD interface.
+- **VarSet Quick Editor**: Quickly edit variable set groups, values, expressions, and tooltips.
 - **New Project**: Create a new project with predefined structure and settings.
 - ... and more to come!
