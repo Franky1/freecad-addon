@@ -13,3 +13,6 @@
 - Do not auto-delete unused imports or move FreeCAD imports just to satisfy style; `pyproject.toml` marks `F401` and `E402` unfixable.
 - Validate with `ruff check .` and `mypy freecad` when practical; many FreeCAD behaviors still require manual testing inside FreeCAD.
 - Keep `package.xml`, `README.md`, and `freecad/franky/resources/docs/Overview.md` in sync for user-facing addon metadata.
+- When adding new commands, also check the documentation in `Overview.md` and `README.md` for consistent descriptions and icons.
+- When updating existing commands, ensure that any changes to behavior or requirements are reflected in the documentation and error messages.
+- If you want to test python files outside FreeCAD, you can use the local virtual environment in `.venv/`. Activate it with `source .venv/bin/activate` (Linux/macOS) or `.venv\Scripts\activate.bat` (Windows).
