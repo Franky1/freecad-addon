@@ -17,8 +17,8 @@ from ..resources import Resources
 
 BACKGROUND_TOLERANCE: int = 8
 CROP_PADDING_RATIO: float = 0.05
-NAVICUBE_PARAM_PATH: str = "User parameter:BaseApp/Preferences/NaviCube"
-NAVICUBE_ENABLED_PARAM: str = "Enabled"
+NAVICUBE_PARAM_PATH: str = "User parameter:BaseApp/Preferences/View"
+NAVICUBE_ENABLED_PARAM: str = "ShowNaviCube"
 
 
 def color_distance(first: QtGui.QColor, second: QtGui.QColor) -> int:
@@ -36,6 +36,7 @@ def refresh_view(view: Any) -> None:
     redraw = getattr(view, "redraw", None)
     if callable(redraw):
         redraw()
+    QtGui.QApplication.processEvents()
     Gui.updateGui()
 
 
