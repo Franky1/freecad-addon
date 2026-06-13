@@ -121,7 +121,7 @@ class FrankyWorkbench(Gui.Workbench):
     def ContextMenu(self, recipient: str) -> None:
         App.Console.PrintMessage("Franky Workbench context menu\n")
         # Adding context menus when the Workbench is active (example)
-        self.appendContextMenu("", [ExportStepCommand.Name])
+        # self.appendContextMenu("", [ExportStepCommand.Name])
 
     @classmethod
     def Install(cls) -> None:
