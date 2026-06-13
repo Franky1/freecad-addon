@@ -120,7 +120,7 @@ def default_save_path() -> Path:
     parameters = App.ParamGet("User parameter:BaseApp/Preferences/General")
     configured_path = parameters.GetString("FileOpenSavePath", "")
     if configured_path:
-        path = Path(configured_path).expanduser()
+        path: Path = Path(configured_path).expanduser()
         if path.is_dir():
             return path
 
@@ -132,7 +132,7 @@ def is_safe_filename(name: str) -> bool:
     if not name:
         return False
 
-    stripped = name.strip()
+    stripped: str = name.strip()
     if stripped != name or stripped.endswith("."):
         return False
 
@@ -145,17 +145,28 @@ def is_safe_filename(name: str) -> bool:
 
 def safe_object_name(label: str) -> str:
     """Convert a visible label to a stable FreeCAD object name."""
-    name = "".join(character if character.isalnum() or character == "_" else "_" for character in label.strip())
-    name = "_".join(part for part in name.split("_") if part)
-    if not name or name[0].isdigit() or keyword.iskeyword(name):
-        name = str(name)
+    name: str = "".join(character if character.isalnum() or character == "_" else "_" for character in label.strip())
+    name: str = "_".join(part for part in name.split("_") if part)
+    if not name:
+        name = "Object"
+    if name[0].isdigit() or keyword.iskeyword(name):
+        name = f"Object_{name}"
 
     return name
 
 
+def internal_object_name(label: str) -> str:
+    """Return an internal FreeCAD name without the visible order prefix."""
+    prefix, separator, suffix = label.partition("_")
+    if separator and prefix.isdigit() and suffix:
+        return safe_object_name(suffix)
+
+    return safe_object_name(label)
+
+
 def add_group(document: Any, label: str) -> Any:
     """Create a document group with a stable internal name and visible label."""
-    group = document.addObject("App::DocumentObjectGroup", safe_object_name(label))
+    group = document.addObject("App::DocumentObjectGroup", internal_object_name(label))
     group.Label = label
     return group
 
@@ -169,7 +180,7 @@ def add_to_group(group: Any, obj: Any) -> None:
 
 def add_body_object(body: Any, type_id: str, name: str, label: str) -> Any:
     """Create an object inside a PartDesign Body."""
-    obj = body.newObject(type_id, safe_object_name(name))
+    obj = body.newObject(type_id, internal_object_name(name))
     obj.Label = label
     return obj
 
@@ -211,19 +222,20 @@ def rename_body_origin(body: Any, label: str) -> None:
         pass
 
 
-def add_description_property(obj: Any) -> None:
-    """Add a custom Description property when FreeCAD exposes dynamic properties."""
-    if "Description" in getattr(obj, "PropertiesList", []):
-        return
-
+def add_description_properties(obj: Any) -> None:
+    """Add description-like properties when FreeCAD exposes dynamic properties."""
     add_property = getattr(obj, "addProperty", None)
     if not callable(add_property):
         return
 
-    try:
-        add_property("App::PropertyString", "Description", "Franky", translate("Franky", "Description"))
-    except Exception:
-        pass
+    for property_name in ("Label2", "Description"):
+        if property_name in getattr(obj, "PropertiesList", []):
+            continue
+
+        try:
+            add_property("App::PropertyString", property_name, "Franky", translate("Franky", "Description"))
+        except Exception:
+            pass
 
 
 def set_description(obj: Any, description: str, create_property: bool = False) -> None:
@@ -232,15 +244,14 @@ def set_description(obj: Any, description: str, create_property: bool = False) -
         return
 
     if create_property:
-        add_description_property(obj=obj)
+        add_description_properties(obj=obj)
 
-    for property_name in ("Description", "Label2"):
+    for property_name in ("Label2", "Description"):
         if property_name not in getattr(obj, "PropertiesList", []):
             continue
 
         try:
             setattr(obj, property_name, description)
-            return
         except Exception:
             pass
 
@@ -334,12 +345,12 @@ def create_master_objects(document: Any) -> None:
     master_group = add_group(document=document, label=MASTER_GROUP_LABEL)
     set_description(obj=master_group, description="Master", create_property=True)
 
-    sketch = document.addObject("Sketcher::SketchObject", safe_object_name(MASTER_SKETCH_LABEL))
+    sketch = document.addObject("Sketcher::SketchObject", internal_object_name(MASTER_SKETCH_LABEL))
     sketch.Label = MASTER_SKETCH_LABEL
     set_description(obj=sketch, description="Master Sketch", create_property=True)
     add_to_group(group=master_group, obj=sketch)
 
-    varset = document.addObject("App::VarSet", safe_object_name(MASTER_VARSET_LABEL))
+    varset = document.addObject("App::VarSet", internal_object_name(MASTER_VARSET_LABEL))
     varset.Label = MASTER_VARSET_LABEL
     add_to_group(group=master_group, obj=varset)
 
@@ -350,7 +361,7 @@ def create_body_objects(document: Any, template: BodyTemplate) -> None:
     set_description(obj=body_group, description=template.description, create_property=True)
 
     body_label = template.object_label(object_type="Body")
-    body = document.addObject("PartDesign::Body", safe_object_name(body_label))
+    body = document.addObject("PartDesign::Body", internal_object_name(body_label))
     body.Label = body_label
     set_body_color(body=body, color=template.color)
     rename_body_origin(body=body, label=template.object_label(object_type="Origin"))
