@@ -156,11 +156,7 @@ def safe_object_name(label: str) -> str:
 
 
 def internal_object_name(label: str) -> str:
-    """Return an internal FreeCAD name without the visible order prefix."""
-    prefix, separator, suffix = label.partition("_")
-    if separator and prefix.isdigit() and suffix:
-        return safe_object_name(suffix)
-
+    """Return a FreeCAD-safe internal name while preserving visible order prefixes."""
     return safe_object_name(label)
 
 
