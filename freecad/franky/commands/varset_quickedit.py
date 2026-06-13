@@ -30,7 +30,7 @@ PROPERTY_TYPES: tuple[str, ...] = (
     "App::PropertyVolume",
     "App::PropertyPercent",
 )
-DEFAULT_NEW_VARIABLE_TYPE: str = "App::PropertyFloat"
+DEFAULT_NEW_VARIABLE_TYPE: str = "App::PropertyLength"
 COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int] = (160, 160, 180, 280)
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
@@ -44,6 +44,7 @@ class VariableInfo:
 
     name: str
     type_id: str
+    group: str
     tooltip: str
 
 
@@ -117,6 +118,7 @@ def list_variables(varset: Any) -> list[VariableInfo]:
             VariableInfo(
                 name=str(property_name),
                 type_id=get_property_text(varset, "getTypeIdOfProperty", property_name),
+                group=get_property_text(varset, "getGroupOfProperty", property_name),
                 tooltip=get_property_text(varset, "getDocumentationOfProperty", property_name),
             )
         )
@@ -318,8 +320,23 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
     def _set_new_variable_row(self, row: int) -> None:
         self._set_text_item(row=row, column=0, text="")
         self._set_text_item(row=row, column=1, text="")
-        self._set_type_combo(row=row, variable=VariableInfo(name="", type_id=DEFAULT_NEW_VARIABLE_TYPE, tooltip=""))
+        variable = VariableInfo(
+            name="",
+            type_id=DEFAULT_NEW_VARIABLE_TYPE,
+            group=self._new_variable_group(),
+            tooltip="",
+        )
+        self._set_type_combo(
+            row=row,
+            variable=variable,
+        )
         self._set_text_item(row=row, column=3, text="")
+
+    def _new_variable_group(self) -> str:
+        if not self.variables:
+            return ""
+
+        return self.variables[-1].group
 
     def _property_value_text(self, varset: Any, property_name: str) -> str:
         try:
@@ -367,6 +384,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         type_id = self._type_text(row=row)
+        group = self._new_variable_group()
         value_text = self._item_text(row=row, column=1)
         tooltip = self._item_text(row=row, column=3)
 
@@ -377,7 +395,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         def add_variable() -> None:
-            varset.addProperty(type_id, name, VARIABLE_GROUP, tooltip)
+            varset.addProperty(type_id, name, group, tooltip)
             set_property_value(varset, name, value)
 
         try:
@@ -488,7 +506,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         def change_type() -> None:
             varset.removeProperty(variable.name)
-            varset.addProperty(type_id, variable.name, VARIABLE_GROUP, tooltip)
+            varset.addProperty(type_id, variable.name, variable.group, tooltip)
             set_property_value(varset, variable.name, value)
 
         try:
@@ -513,7 +531,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         try:
-            varset.addProperty(old_type_id, variable.name, VARIABLE_GROUP, variable.tooltip)
+            varset.addProperty(old_type_id, variable.name, variable.group, variable.tooltip)
             set_property_value(varset, variable.name, old_value)
         except Exception as error:
             App.Console.PrintError(f"Could not restore variable '{variable.name}': {error}\n")
