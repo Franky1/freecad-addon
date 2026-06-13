@@ -5,7 +5,7 @@ Command to create a new FreeCAD project with a user-friendly PySide Widget, pre-
 - Label at the top for a project name, creates new FreeCAD document and names .FCStd file accordingly.
 - Default project structure is created in the project tree:
     - Creates a "00_Master" folder in the project tree.
-        - Creates an empty "00_MasterSketch" sketch in the "00_Master" folder.
+        - Creates an empty "00_Master_Sketch" sketch in the "00_Master" folder.
         - Creates an empty "vv" VarSet in the "00_Master" folder.
     - Widget has 10 input fields for the user to give names to Body folders, which are created in the project tree with the given names.
     - Widget has 5 columns behind the input fields, with
@@ -49,7 +49,7 @@ LAYOUT_SPACING: int = 10
 COLOR_SWATCH_WIDTH: int = 48
 PROJECT_NAME_PLACEHOLDER: str = "MyProject"
 MASTER_GROUP_LABEL: str = "00_Master"
-MASTER_SKETCH_LABEL: str = "00_MasterSketch"
+MASTER_SKETCH_LABEL: str = "00_Master_Sketch"
 MASTER_VARSET_LABEL: str = "vv"
 PLANE_CHOICES: tuple[str, ...] = ("None", "XY", "XZ", "YZ")
 AXIS_CHOICES: tuple[str, ...] = ("None", "X", "Y", "Z")
@@ -148,7 +148,7 @@ def safe_object_name(label: str) -> str:
     name = "".join(character if character.isalnum() or character == "_" else "_" for character in label.strip())
     name = "_".join(part for part in name.split("_") if part)
     if not name or name[0].isdigit() or keyword.iskeyword(name):
-        name = f"Franky_{name}"
+        name = str(name)
 
     return name
 
@@ -211,10 +211,28 @@ def rename_body_origin(body: Any, label: str) -> None:
         pass
 
 
-def set_description(obj: Any, description: str) -> None:
-    """Store a body description where FreeCAD exposes a description/editor property."""
-    if not description:
+def add_description_property(obj: Any) -> None:
+    """Add a custom Description property when FreeCAD exposes dynamic properties."""
+    if "Description" in getattr(obj, "PropertiesList", []):
         return
+
+    add_property = getattr(obj, "addProperty", None)
+    if not callable(add_property):
+        return
+
+    try:
+        add_property("App::PropertyString", "Description", "Franky", translate("Franky", "Description"))
+    except Exception:
+        pass
+
+
+def set_description(obj: Any, description: str, create_property: bool = False) -> None:
+    """Store an object description where FreeCAD exposes or accepts a description/editor property."""
+    if not description and not create_property:
+        return
+
+    if create_property:
+        add_description_property(obj=obj)
 
     for property_name in ("Description", "Label2"):
         if property_name not in getattr(obj, "PropertiesList", []):
@@ -314,9 +332,11 @@ def place_on_axis(obj: Any, body: Any, axis: str) -> None:
 def create_master_objects(document: Any) -> None:
     """Create the default master group, sketch, and VarSet."""
     master_group = add_group(document=document, label=MASTER_GROUP_LABEL)
+    set_description(obj=master_group, description="Master", create_property=True)
 
     sketch = document.addObject("Sketcher::SketchObject", safe_object_name(MASTER_SKETCH_LABEL))
     sketch.Label = MASTER_SKETCH_LABEL
+    set_description(obj=sketch, description="Master Sketch", create_property=True)
     add_to_group(group=master_group, obj=sketch)
 
     varset = document.addObject("App::VarSet", safe_object_name(MASTER_VARSET_LABEL))
@@ -327,6 +347,7 @@ def create_master_objects(document: Any) -> None:
 def create_body_objects(document: Any, template: BodyTemplate) -> None:
     """Create one ordered body group and its requested starter objects."""
     body_group = add_group(document=document, label=template.ordered_label)
+    set_description(obj=body_group, description=template.description, create_property=True)
 
     body_label = template.object_label(object_type="Body")
     body = document.addObject("PartDesign::Body", safe_object_name(body_label))
@@ -474,9 +495,7 @@ class BodyTemplateRow:
 
     def _update_color_button(self) -> None:
         color_name = self.color.name()
-        self.color_button.setStyleSheet(
-            f"QPushButton {{ background-color: {color_name}; border: 1px solid #777; }}"
-        )
+        self.color_button.setStyleSheet(f"QPushButton {{ background-color: {color_name}; border: 1px solid #777; }}")
 
     def _combo(self, parent: Any, values: tuple[str, ...]) -> Any:
         combo = QtWidgets.QComboBox(parent=parent)
