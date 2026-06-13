@@ -18,6 +18,5 @@ The addon provides the following commands, available from the **Franky** toolbar
 - **Export to Orca Slicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.
 - **Screenshot**: Quickly capture a screenshot of the current view and save it as a PNG file.
 - **Clipboard**: Quickly capture a screenshot of the current view and copy it to the clipboard.
-- **VarSet Quick Editor**: Quickly edit and delete Varsets entries.
+- **VarSet Quick Editor**: Quickly edit and delete VarSets entries.
 - **New Project**: Create a new project with predefined structure, body colors, and ordered object labels.
-- ... and more to come!
