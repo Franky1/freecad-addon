@@ -23,6 +23,7 @@ from .commands import (
                        ExportStepCommand,
                        ExportStlCommand,
                        ScreenshotCommand,
+                       VarSetQuickEditCommand,
                        WorkbenchManipulator,
 )
 from .resources import Resources
@@ -43,6 +44,7 @@ ExportBambuStudioCommand.Install()
 ExportOrcaSlicerCommand.Install()
 ScreenshotCommand.Install()
 ClipboardCommand.Install()
+VarSetQuickEditCommand.Install()
 
 # Add Commands to the Gui
 WorkbenchManipulator.install()

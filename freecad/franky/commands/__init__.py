@@ -49,8 +49,8 @@ Good practices:
     - Export command classes here it to make it explicit public
 """
 
-from .example_command import ExampleCommand as ExampleCommand
 from .clipboard import ClipboardCommand as ClipboardCommand
+from .example_command import ExampleCommand as ExampleCommand
 from .export_3mf import Export3mfCommand as Export3mfCommand
 from .export_bambustudio import ExportBambuStudioCommand as ExportBambuStudioCommand
 from .export_ideamaker import ExportIdeaMakerCommand as ExportIdeaMakerCommand
@@ -59,6 +59,6 @@ from .export_step import ExportStepCommand as ExportStepCommand
 from .export_stl import ExportStlCommand as ExportStlCommand
 from .manipulator import WorkbenchManipulator as WorkbenchManipulator
 from .screenshot import ScreenshotCommand as ScreenshotCommand
+from .varset_quickedit import VarSetQuickEditCommand as VarSetQuickEditCommand
 
 # from .new_project import NewProjectCommand as NewProjectCommand
-# from .varset_quickedit import VarSetQuickEditCommand as VarSetQuickEditCommand

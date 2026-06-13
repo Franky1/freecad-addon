@@ -17,6 +17,7 @@ The addon provides the following commands, available from the **Franky** toolbar
 - **Export to Bambu Studio**: Exports the selected object(s) to STEP file(s) and opens them in Bambu Studio Slicer.
 - **Export to Orca Slicer**: Exports the selected object(s) to STEP file(s) and opens them in Orca Slicer.
 - **Screenshot**: Quickly capture a screenshot of the current view and save it as a PNG file.
-- **VarSet Quick Edit**: Quickly edit variable sets.
+- **Clipboard**: Quickly capture a screenshot of the current view and copy it to the clipboard.
+- **VarSet Quick Edit**: Quickly edit variable sets in a more user-friendly way than the default FreeCAD interface.
 - **New Project**: Create a new project with predefined structure and settings.
 - ... and more to come!
