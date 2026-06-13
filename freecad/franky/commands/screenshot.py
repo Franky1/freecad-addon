@@ -2,6 +2,8 @@
 
 """Command to capture and export to png a screenshot of the current view."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -14,7 +16,9 @@ translate = App.Qt.translate
 from ..resources import Resources
 
 BACKGROUND_TOLERANCE: int = 8
-CROP_PADDING: int = 8
+CROP_PADDING_RATIO: float = 0.05
+NAVICUBE_PARAM_PATH: str = "User parameter:BaseApp/Preferences/NaviCube"
+NAVICUBE_ENABLED_PARAM: str = "Enabled"
 
 
 def color_distance(first: QtGui.QColor, second: QtGui.QColor) -> int:
@@ -27,7 +31,35 @@ def color_distance(first: QtGui.QColor, second: QtGui.QColor) -> int:
     )
 
 
-def crop_to_content(file_path: Path, *, tolerance: int = BACKGROUND_TOLERANCE, padding: int = CROP_PADDING) -> bool:
+def refresh_view(view: Any) -> None:
+    """Ask FreeCAD to repaint the active view."""
+    redraw = getattr(view, "redraw", None)
+    if callable(redraw):
+        redraw()
+    Gui.updateGui()
+
+
+@contextmanager
+def hidden_navigation_cube(view: Any) -> Iterator[None]:
+    """Temporarily hide the FreeCAD navigation cube."""
+    parameters = App.ParamGet(NAVICUBE_PARAM_PATH)
+    was_enabled = bool(parameters.GetBool(NAVICUBE_ENABLED_PARAM, True))
+
+    parameters.SetBool(NAVICUBE_ENABLED_PARAM, False)
+    refresh_view(view=view)
+    try:
+        yield
+    finally:
+        parameters.SetBool(NAVICUBE_ENABLED_PARAM, was_enabled)
+        refresh_view(view=view)
+
+
+def crop_to_content(
+    file_path: Path,
+    *,
+    tolerance: int = BACKGROUND_TOLERANCE,
+    padding_ratio: float = CROP_PADDING_RATIO,
+) -> bool:
     """Trim background-colored pixels from the screenshot edges."""
     image = QtGui.QImage(str(file_path))
     if image.isNull():
@@ -52,10 +84,15 @@ def crop_to_content(file_path: Path, *, tolerance: int = BACKGROUND_TOLERANCE, p
     if right < left or bottom < top:
         return False
 
-    left = max(left - padding, 0)
-    top = max(top - padding, 0)
-    right = min(right + padding, image.width() - 1)
-    bottom = min(bottom + padding, image.height() - 1)
+    content_width = right - left + 1
+    content_height = bottom - top + 1
+    padding_x = round(content_width * padding_ratio)
+    padding_y = round(content_height * padding_ratio)
+
+    left = max(left - padding_x, 0)
+    top = max(top - padding_y, 0)
+    right = min(right + padding_x, image.width() - 1)
+    bottom = min(bottom + padding_y, image.height() - 1)
 
     cropped = image.copy(left, top, right - left + 1, bottom - top + 1)
     return bool(cropped.save(str(file_path), "PNG"))
@@ -102,7 +139,8 @@ class ScreenshotCommand:
             width, height = view.getSize()
             if file_path.exists():
                 file_path.unlink()
-            view.saveImage(str(file_path), width, height, "Current")
+            with hidden_navigation_cube(view=view):
+                view.saveImage(str(file_path), width, height, "Current")
             crop_to_content(file_path=file_path)
         except Exception as error:
             App.Console.PrintError(f"Could not capture screenshot: {error}\n")
