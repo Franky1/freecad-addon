@@ -41,6 +41,7 @@ TOOLTIP_COLUMN: int = 5
 DELETE_COLUMN: int = 6
 COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int, int] = (140, 160, 160, 260, 180, 280, 48)
 EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (217, 122, 31)
+DELETE_BUTTON_STYLE: str = "QToolButton { color: #c62828; }"
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
 TABLE_PADDING: int = 12
@@ -292,6 +293,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.variables: list[VariableInfo] = []
         self.loading: bool = False
         self.adding_variable: bool = False
+        self.reload_pending: bool = False
 
         self.setWindowTitle(translate("Franky", "VarSet Quick Editor"))
         self.setWindowIcon(QtGui.QIcon(Resources.icon(path="brackets.svg")))
@@ -409,6 +411,17 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         self._resize_to_contents()
 
+    def _load_selected_varset_later(self) -> None:
+        if self.reload_pending:
+            return
+
+        self.reload_pending = True
+        QtCore.QTimer.singleShot(0, self._load_pending_selected_varset)
+
+    def _load_pending_selected_varset(self) -> None:
+        self.reload_pending = False
+        self._load_selected_varset()
+
     def _set_text_item(self, row: int, column: int, text: str, editable: bool = True) -> None:
         item = QtWidgets.QTableWidgetItem(text)
         self._set_item_editable(item=item, editable=editable)
@@ -459,6 +472,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
     def _set_delete_button(self, row: int, variable: VariableInfo) -> None:
         button = QtWidgets.QToolButton(parent=self.table)
         button.setText("X")
+        button.setStyleSheet(DELETE_BUTTON_STYLE)
         button.setToolTip(translate("Franky", "Delete variable"))
         button.clicked.connect(lambda _checked=False, name=variable.name: self._delete_variable(name))
         self.table.setCellWidget(row, DELETE_COLUMN, button)
@@ -616,7 +630,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             App.Console.PrintError(f"Could not create variable '{name}': {error}\n")
             return
 
-        self._load_selected_varset()
+        self._load_selected_varset_later()
 
     def _delete_variable(self, variable_name: str) -> None:
         if self.loading or self.adding_variable:
