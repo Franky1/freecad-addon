@@ -3,7 +3,8 @@
 """Command to quickly edit variable sets in a more user-friendly way than the default FreeCAD interface."""
 
 import keyword
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
@@ -37,7 +38,8 @@ VALUE_COLUMN: int = 2
 EXPRESSION_COLUMN: int = 3
 TYPE_COLUMN: int = 4
 TOOLTIP_COLUMN: int = 5
-COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int] = (140, 160, 160, 260, 180, 280)
+DELETE_COLUMN: int = 6
+COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int, int] = (140, 160, 160, 260, 180, 280, 48)
 EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (217, 122, 31)
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
@@ -289,6 +291,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.varsets: dict[str, Any] = {}
         self.variables: list[VariableInfo] = []
         self.loading: bool = False
+        self.adding_variable: bool = False
 
         self.setWindowTitle(translate("Franky", "VarSet Quick Editor"))
         self.setWindowIcon(QtGui.QIcon(Resources.icon(path="brackets.svg")))
@@ -299,7 +302,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.varset_combo.currentIndexChanged.connect(self._selected_varset_changed)
 
         self.table = QtWidgets.QTableWidget(parent=self)
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
             [
                 translate("Franky", "Group"),
@@ -308,6 +311,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
                 translate("Franky", "Expression"),
                 translate("Franky", "Type"),
                 translate("Franky", "Tooltip"),
+                translate("Franky", "Delete"),
             ]
         )
         self.table.verticalHeader().setVisible(False)
@@ -369,29 +373,40 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
     def _selected_varset(self) -> Any | None:
         return self.varsets.get(self._selected_varset_name())
 
-    def _load_selected_varset(self) -> None:
+    @contextmanager
+    def _table_update(self) -> Iterator[None]:
+        previous_loading = self.loading
+        previous_blocked = self.table.blockSignals(True)
         self.loading = True
-        self.variables = []
-        self.table.setRowCount(0)
+        try:
+            yield
+        finally:
+            self.loading = previous_loading
+            self.table.blockSignals(previous_blocked)
 
-        varset = self._selected_varset()
-        if varset is not None:
-            self.variables = list_variables(varset=varset)
-            self.table.setRowCount(len(self.variables) + 1)
-            for row, variable in enumerate(self.variables):
-                expression = get_property_expression(obj=varset, property_name=variable.name)
-                self._set_text_item(row=row, column=GROUP_COLUMN, text=variable.group)
-                self._set_text_item(row=row, column=LABEL_COLUMN, text=variable.name)
-                self._set_value_item(
-                    row=row, text=self._property_value_text(varset, variable.name), expression=expression
-                )
-                self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
-                self._set_type_combo(row=row, variable=variable)
-                self._set_text_item(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
+    def _load_selected_varset(self) -> None:
+        with self._table_update():
+            self.variables = []
+            self.table.setRowCount(0)
 
-            self._set_new_variable_row(row=len(self.variables))
+            varset = self._selected_varset()
+            if varset is not None:
+                self.variables = list_variables(varset=varset)
+                self.table.setRowCount(len(self.variables) + 1)
+                for row, variable in enumerate(self.variables):
+                    expression = get_property_expression(obj=varset, property_name=variable.name)
+                    self._set_text_item(row=row, column=GROUP_COLUMN, text=variable.group)
+                    self._set_text_item(row=row, column=LABEL_COLUMN, text=variable.name)
+                    self._set_value_item(
+                        row=row, text=self._property_value_text(varset, variable.name), expression=expression
+                    )
+                    self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
+                    self._set_type_combo(row=row, variable=variable)
+                    self._set_text_item(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
+                    self._set_delete_button(row=row, variable=variable)
 
-        self.loading = False
+                self._set_new_variable_row(row=len(self.variables))
+
         self._resize_to_contents()
 
     def _set_text_item(self, row: int, column: int, text: str, editable: bool = True) -> None:
@@ -406,9 +421,10 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
 
     def _set_value_editable(self, row: int, editable: bool) -> None:
-        item = self.table.item(row, VALUE_COLUMN)
-        if item is not None:
-            self._set_item_editable(item=item, editable=editable)
+        with self._table_update():
+            item = self.table.item(row, VALUE_COLUMN)
+            if item is not None:
+                self._set_item_editable(item=item, editable=editable)
 
     def _set_value_item(self, row: int, text: str, expression: str) -> None:
         self._set_text_item(row=row, column=VALUE_COLUMN, text=text, editable=not expression)
@@ -423,12 +439,9 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         value_text = self._property_value_text(varset, variable.name)
         expression = get_property_expression(obj=varset, property_name=variable.name)
 
-        self.loading = True
-        try:
+        with self._table_update():
             self._set_value_item(row=row, text=value_text, expression=expression)
             self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
-        finally:
-            self.loading = False
 
     def _set_type_combo(self, row: int, variable: VariableInfo) -> None:
         combo = QtWidgets.QComboBox(parent=self.table)
@@ -442,6 +455,13 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             lambda _index, combo=combo, row=row: self._type_changed(row=row, type_id=combo.currentText())
         )
         self.table.setCellWidget(row, TYPE_COLUMN, combo)
+
+    def _set_delete_button(self, row: int, variable: VariableInfo) -> None:
+        button = QtWidgets.QToolButton(parent=self.table)
+        button.setText("X")
+        button.setToolTip(translate("Franky", "Delete variable"))
+        button.clicked.connect(lambda _checked=False, name=variable.name: self._delete_variable(name))
+        self.table.setCellWidget(row, DELETE_COLUMN, button)
 
     def _set_new_variable_row(self, row: int) -> None:
         self._set_text_item(row=row, column=GROUP_COLUMN, text=self._new_variable_group())
@@ -459,6 +479,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             variable=variable,
         )
         self._set_text_item(row=row, column=TOOLTIP_COLUMN, text="")
+        self._set_text_item(row=row, column=DELETE_COLUMN, text="", editable=False)
 
     def _new_variable_group(self) -> str:
         if not self.variables:
@@ -509,7 +530,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         )
 
     def _item_changed(self, item: Any) -> None:
-        if self.loading:
+        if self.loading or self.adding_variable:
             return
 
         row = int(item.row())
@@ -534,6 +555,16 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self._resize_to_contents()
 
     def _add_variable_from_new_row(self, row: int) -> None:
+        if self.adding_variable:
+            return
+
+        self.adding_variable = True
+        try:
+            self._add_variable_from_new_row_guarded(row=row)
+        finally:
+            self.adding_variable = False
+
+    def _add_variable_from_new_row_guarded(self, row: int) -> None:
         varset = self._selected_varset()
         if varset is None:
             return
@@ -583,6 +614,31 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             )
         except Exception as error:
             App.Console.PrintError(f"Could not create variable '{name}': {error}\n")
+            return
+
+        self._load_selected_varset()
+
+    def _delete_variable(self, variable_name: str) -> None:
+        if self.loading or self.adding_variable:
+            return
+
+        varset = self._selected_varset()
+        if varset is None:
+            return
+
+        if variable_name not in getattr(varset, "PropertiesList", []):
+            App.Console.PrintError(f"Variable '{variable_name}' no longer exists.\n")
+            self._load_selected_varset()
+            return
+
+        try:
+            run_transaction(
+                document=self.document,
+                label=translate("Franky", "Delete VarSet variable"),
+                action=lambda: varset.removeProperty(variable_name),
+            )
+        except Exception as error:
+            App.Console.PrintError(f"Could not delete variable '{variable_name}': {error}\n")
             return
 
         self._load_selected_varset()
@@ -732,7 +788,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         variable.tooltip = text
 
     def _type_changed(self, row: int, type_id: str) -> None:
-        if self.loading:
+        if self.loading or self.adding_variable:
             return
 
         varset = self._selected_varset()
@@ -827,7 +883,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         return self.variables[row]
 
     def _is_new_variable_row(self, row: int) -> bool:
-        return self._selected_varset() is not None and row == len(self.variables)
+        return bool(self.varsets) and row == len(self.variables)
 
     def _item_text(self, row: int, column: int) -> str:
         item = self.table.item(row, column)
@@ -841,20 +897,24 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         return DEFAULT_NEW_VARIABLE_TYPE
 
     def _reset_text(self, row: int, column: int, text: str) -> None:
-        self.loading = True
-        item = self.table.item(row, column)
-        if item is not None:
-            item.setText(text)
-        self.loading = False
+        with self._table_update():
+            item = self.table.item(row, column)
+            if item is not None:
+                item.setText(text)
 
     def _reset_type(self, row: int, type_id: str) -> None:
         combo = self.table.cellWidget(row, TYPE_COLUMN)
         if not isinstance(combo, QtWidgets.QComboBox):
             return
 
+        previous_loading = self.loading
+        previous_blocked = combo.blockSignals(True)
         self.loading = True
-        combo.setCurrentText(type_id)
-        self.loading = False
+        try:
+            combo.setCurrentText(type_id)
+        finally:
+            self.loading = previous_loading
+            combo.blockSignals(previous_blocked)
 
     def _resize_to_contents(self) -> None:
         self.table.resizeColumnsToContents()
