@@ -55,6 +55,7 @@
 
     <!--[ Urls ]-->
 
+    <url type="website">https://github.com/Franky1/freecad-addon</url>
     <url type="repository" branch="main">https://github.com/Franky1/freecad-addon</url>
     <url type="documentation">https://github.com/Franky1/freecad-addon/tree/main/freecad/franky/resources/docs/</url>
     <url type="bugtracker">https://github.com/Franky1/freecad-addon/issues/</url>
