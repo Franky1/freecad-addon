@@ -92,7 +92,7 @@ class FrankyWorkbench(Gui.Workbench):
         "Franky Personal FreeCAD AddOn",
     )
 
-    Icon: str = Resources.icon(path="franky.svg")
+    Icon: str = Resources.icon(path="tools.svg")
 
     def Initialize(self) -> None:
         App.Console.PrintMessage("Franky Workbench initialized\n")

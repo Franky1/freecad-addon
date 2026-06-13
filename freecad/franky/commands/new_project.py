@@ -8,7 +8,8 @@ Command to create a new FreeCAD project with a user-friendly PySide Widget, pre-
         - Creates an empty "00_MasterSketch" sketch in the "00_Master" folder.
         - Creates an empty "vv" VarSet in the "00_Master" folder.
     - Widget has 10 input fields for the user to give names to Body folders, which are created in the project tree with the given names.
-    - Widget has 4 columns behind the input fields, with
+    - Widget has 5 columns behind the input fields, with
+        - Color selector for the Body color.
         - Dropdown for "Sketch Plane" (None, XY, XZ, YZ). Default is None.
         - Dropdown for "Datum Plane" (None, XY, XZ, YZ). Default is None.
         - Dropdown for "Datum Line" (None, X, Y, Z). Default is None.
@@ -32,7 +33,7 @@ Command to create a new FreeCAD project with a user-friendly PySide Widget, pre-
 import keyword
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeAlias
 
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -45,12 +46,26 @@ from ..resources import Resources
 BODY_ROW_COUNT: int = 10
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
+COLOR_SWATCH_WIDTH: int = 48
 PROJECT_NAME_PLACEHOLDER: str = "MyProject"
 MASTER_GROUP_LABEL: str = "00_Master"
 MASTER_SKETCH_LABEL: str = "00_MasterSketch"
 MASTER_VARSET_LABEL: str = "vv"
 PLANE_CHOICES: tuple[str, ...] = ("None", "XY", "XZ", "YZ")
 AXIS_CHOICES: tuple[str, ...] = ("None", "X", "Y", "Z")
+BodyColor: TypeAlias = tuple[float, float, float]
+DEFAULT_BODY_COLORS: tuple[BodyColor, ...] = (
+    (0.80, 0.20, 0.18),
+    (0.92, 0.50, 0.16),
+    (0.95, 0.72, 0.20),
+    (0.35, 0.66, 0.30),
+    (0.18, 0.62, 0.64),
+    (0.24, 0.44, 0.80),
+    (0.48, 0.32, 0.72),
+    (0.78, 0.34, 0.58),
+    (0.46, 0.50, 0.55),
+    (0.72, 0.48, 0.28),
+)
 WINDOWS_RESERVED_FILENAMES: frozenset[str] = frozenset(
     {
         "CON",
@@ -85,6 +100,7 @@ class BodyTemplate:
 
     index: int
     name: str
+    color: BodyColor
     sketch_plane: str
     datum_plane: str
     datum_line: str
@@ -156,6 +172,43 @@ def add_body_object(body: Any, type_id: str, name: str, label: str) -> Any:
     obj = body.newObject(type_id, safe_object_name(name))
     obj.Label = label
     return obj
+
+
+def body_color_to_qcolor(color: BodyColor) -> Any:
+    """Convert a FreeCAD color tuple to a Qt color."""
+    return QtGui.QColor.fromRgbF(*color)
+
+
+def qcolor_to_body_color(color: Any) -> BodyColor:
+    """Convert a Qt color to a FreeCAD color tuple."""
+    return (float(color.redF()), float(color.greenF()), float(color.blueF()))
+
+
+def set_body_color(body: Any, color: BodyColor) -> None:
+    """Set the display color of a PartDesign Body when the GUI view object is available."""
+    if not App.GuiUp:
+        return
+
+    view_object = getattr(body, "ViewObject", None)
+    if view_object is None:
+        return
+
+    try:
+        view_object.ShapeColor = color
+    except Exception:
+        pass
+
+
+def rename_body_origin(body: Any, label: str) -> None:
+    """Rename the implicit PartDesign Body origin when FreeCAD exposes it."""
+    origin = getattr(body, "Origin", None)
+    if origin is None:
+        return
+
+    try:
+        origin.Label = label
+    except Exception:
+        pass
 
 
 def set_description(obj: Any, description: str) -> None:
@@ -278,6 +331,8 @@ def create_body_objects(document: Any, template: BodyTemplate) -> None:
     body_label = template.object_label(object_type="Body")
     body = document.addObject("PartDesign::Body", safe_object_name(body_label))
     body.Label = body_label
+    set_body_color(body=body, color=template.color)
+    rename_body_origin(body=body, label=template.object_label(object_type="Origin"))
     set_description(obj=body, description=template.description)
     add_to_group(group=body_group, obj=body)
 
@@ -359,8 +414,17 @@ class BodyTemplateRow:
 
     def __init__(self, parent: Any, index: int) -> None:
         self.index = index
+        self.default_color = DEFAULT_BODY_COLORS[(index - 1) % len(DEFAULT_BODY_COLORS)]
         self.name_edit = QtWidgets.QLineEdit(parent=parent)
         self.name_edit.setPlaceholderText(translate("Franky", "Body name"))
+
+        self.color_button = QtWidgets.QPushButton(parent=parent)
+        self.color_button.setAccessibleName(translate("Franky", "Body color"))
+        self.color_button.setToolTip(translate("Franky", "Select body color"))
+        self.color_button.setFixedWidth(COLOR_SWATCH_WIDTH)
+        self.color_button.clicked.connect(self._select_color)
+        self.color = body_color_to_qcolor(color=self.default_color)
+        self._update_color_button()
 
         self.sketch_plane_combo = self._combo(parent=parent, values=PLANE_CHOICES)
         self.datum_plane_combo = self._combo(parent=parent, values=PLANE_CHOICES)
@@ -380,6 +444,7 @@ class BodyTemplateRow:
         return BodyTemplate(
             index=ordered_index,
             name=name,
+            color=qcolor_to_body_color(color=self.color),
             sketch_plane=self._current_combo_value(combo=self.sketch_plane_combo),
             datum_plane=self._current_combo_value(combo=self.datum_plane_combo),
             datum_line=self._current_combo_value(combo=self.datum_line_combo),
@@ -389,11 +454,29 @@ class BodyTemplateRow:
 
     def reset(self) -> None:
         self.name_edit.clear()
+        self.color = body_color_to_qcolor(color=self.default_color)
+        self._update_color_button()
         self.sketch_plane_combo.setCurrentIndex(0)
         self.datum_plane_combo.setCurrentIndex(0)
         self.datum_line_combo.setCurrentIndex(0)
         self.datum_point_checkbox.setChecked(False)
         self.description_edit.clear()
+
+    def _select_color(self) -> None:
+        color = QtWidgets.QColorDialog.getColor(
+            self.color,
+            self.name_edit,
+            translate("Franky", "Select body color"),
+        )
+        if color.isValid():
+            self.color = color
+            self._update_color_button()
+
+    def _update_color_button(self) -> None:
+        color_name = self.color.name()
+        self.color_button.setStyleSheet(
+            f"QPushButton {{ background-color: {color_name}; border: 1px solid #777; }}"
+        )
 
     def _combo(self, parent: Any, values: tuple[str, ...]) -> Any:
         combo = QtWidgets.QComboBox(parent=parent)
@@ -503,6 +586,7 @@ class NewProjectDialog(QtWidgets.QDialog):
         headers = [
             "",
             translate("Franky", "Body"),
+            translate("Franky", "Color"),
             translate("Franky", "Sketch Plane"),
             translate("Franky", "Datum Plane"),
             translate("Franky", "Datum Line"),
@@ -519,11 +603,12 @@ class NewProjectDialog(QtWidgets.QDialog):
         number_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(number_label, grid_row, 0)
         layout.addWidget(row.name_edit, grid_row, 1)
-        layout.addWidget(row.sketch_plane_combo, grid_row, 2)
-        layout.addWidget(row.datum_plane_combo, grid_row, 3)
-        layout.addWidget(row.datum_line_combo, grid_row, 4)
-        layout.addWidget(row.datum_point_checkbox, grid_row, 5, QtCore.Qt.AlignCenter)
-        layout.addWidget(row.description_edit, grid_row, 6)
+        layout.addWidget(row.color_button, grid_row, 2)
+        layout.addWidget(row.sketch_plane_combo, grid_row, 3)
+        layout.addWidget(row.datum_plane_combo, grid_row, 4)
+        layout.addWidget(row.datum_line_combo, grid_row, 5)
+        layout.addWidget(row.datum_point_checkbox, grid_row, 6, QtCore.Qt.AlignCenter)
+        layout.addWidget(row.description_edit, grid_row, 7)
 
 
 class NewProjectCommand:

@@ -59,7 +59,7 @@ The addon provides the following commands, available from the **Franky** workben
 | <img src="freecad/franky/resources/icons/camera.svg" alt="Camera icon" width="24"> | **Screenshot to File** | Capture a screenshot of the current view and save to PNG file. |
 | <img src="freecad/franky/resources/icons/clipboard.svg" alt="Clipboard icon" width="24"> | **Screenshot to Clipboard** | Capture a screenshot of the current view and copy to Clipboard. |
 | <img src="freecad/franky/resources/icons/brackets.svg" alt="VarSet Quick Edit icon" width="24"> | **VarSet Quick Edit** | Quickly edit and delete variable set entries. |
-| <img src="freecad/franky/resources/icons/newproject.svg" alt="New Project icon" width="24"> | **New Project** | Create a new project with predefined structure and settings. |
+| <img src="freecad/franky/resources/icons/newproject.svg" alt="New Project icon" width="24"> | **New Project** | Create a new project with predefined structure, body colors, and ordered object labels. |
 
 Each command requires an active, saved document with one or more objects selected. A separate file is written per selected object, named `<document>-<label>.<ext>` (where `<ext>` is `step`, `stl`, or `3mf`), next to the FreeCAD document.
 

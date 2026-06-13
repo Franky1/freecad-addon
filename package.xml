@@ -8,7 +8,7 @@
 
     <name>Franky</name>
     <description>Personal FreeCAD AddOn</description>
-    <version>0.2.15</version>
+    <version>0.2.16</version>
     <date>2026-06-13</date>
 
     <!--[ Ecosystem Requirements ]-->
@@ -51,7 +51,7 @@
 
     <!--[ Icon ]-->
 
-    <icon>freecad/franky/resources/icons/franky.svg</icon>
+    <icon>freecad/franky/resources/icons/tools.svg</icon>
 
     <!--[ Urls ]-->
 
@@ -71,7 +71,7 @@
             <classname>FrankyWorkbench</classname>
             <description>Personal FreeCAD AddOn</description>
             <subdirectory>./</subdirectory>
-            <icon>freecad/franky/resources/icons/franky.svg</icon>
+            <icon>freecad/franky/resources/icons/tools.svg</icon>
         </workbench>
 
     </content>
