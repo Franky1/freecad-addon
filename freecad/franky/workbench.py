@@ -15,6 +15,7 @@ from .commands import (
     ExportOrcaSlicerCommand,
     ExportStepCommand,
     ExportStlCommand,
+    NewProjectCommand,
     ScreenshotCommand,
     VarSetQuickEditCommand,
 )
@@ -47,6 +48,7 @@ class FrankyWorkbench(Gui.Workbench):
             ScreenshotCommand.Name,
             ClipboardCommand.Name,
             VarSetQuickEditCommand.Name,
+            NewProjectCommand.Name,
         ]
         self.appendMenu("Franky", commands)
         self.appendToolbar("Franky", commands)

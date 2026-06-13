@@ -22,6 +22,7 @@ from .commands import (
                        ExportOrcaSlicerCommand,
                        ExportStepCommand,
                        ExportStlCommand,
+                       NewProjectCommand,
                        ScreenshotCommand,
                        VarSetQuickEditCommand,
                        WorkbenchManipulator,
@@ -45,6 +46,7 @@ ExportOrcaSlicerCommand.Install()
 ScreenshotCommand.Install()
 ClipboardCommand.Install()
 VarSetQuickEditCommand.Install()
+NewProjectCommand.Install()
 
 # Add Commands to the Gui
 WorkbenchManipulator.install()

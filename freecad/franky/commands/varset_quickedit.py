@@ -30,8 +30,11 @@ PROPERTY_TYPES: tuple[str, ...] = (
     "App::PropertyVolume",
     "App::PropertyPercent",
 )
+DEFAULT_NEW_VARIABLE_TYPE: str = "App::PropertyFloat"
 COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int] = (160, 160, 180, 280)
-COLUMN_PADDING: int = 32
+DIALOG_PADDING: int = 16
+LAYOUT_SPACING: int = 10
+TABLE_PADDING: int = 12
 MAX_SCREEN_RATIO: float = 0.85
 
 
@@ -197,7 +200,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.variables: list[VariableInfo] = []
         self.loading: bool = False
 
-        self.setWindowTitle(translate("Franky", "VarSet Quick Edit"))
+        self.setWindowTitle(translate("Franky", "VarSet Quick Editor"))
         self.setWindowIcon(QtGui.QIcon(Resources.icon(path="brackets.svg")))
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
 
@@ -218,13 +221,20 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.table.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.table.itemChanged.connect(self._item_changed)
 
         selector_layout = QtWidgets.QHBoxLayout()
+        selector_layout.setContentsMargins(0, 0, 0, 0)
+        selector_layout.setSpacing(LAYOUT_SPACING)
         selector_layout.addWidget(QtWidgets.QLabel(translate("Franky", "VarSet"), parent=self))
         selector_layout.addWidget(self.varset_combo, 1)
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(DIALOG_PADDING, DIALOG_PADDING, DIALOG_PADDING, DIALOG_PADDING)
+        layout.setSpacing(LAYOUT_SPACING)
+        layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         layout.addLayout(selector_layout)
         layout.addWidget(self.table)
         self.setLayout(layout)
@@ -275,12 +285,14 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         varset = self._selected_varset()
         if varset is not None:
             self.variables = list_variables(varset=varset)
-            self.table.setRowCount(len(self.variables))
+            self.table.setRowCount(len(self.variables) + 1)
             for row, variable in enumerate(self.variables):
                 self._set_text_item(row=row, column=0, text=variable.name)
                 self._set_text_item(row=row, column=1, text=self._property_value_text(varset, variable.name))
                 self._set_type_combo(row=row, variable=variable)
                 self._set_text_item(row=row, column=3, text=variable.tooltip)
+
+            self._set_new_variable_row(row=len(self.variables))
 
         self.loading = False
         self._resize_to_contents()
@@ -303,6 +315,12 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         )
         self.table.setCellWidget(row, 2, combo)
 
+    def _set_new_variable_row(self, row: int) -> None:
+        self._set_text_item(row=row, column=0, text="")
+        self._set_text_item(row=row, column=1, text="")
+        self._set_type_combo(row=row, variable=VariableInfo(name="", type_id=DEFAULT_NEW_VARIABLE_TYPE, tooltip=""))
+        self._set_text_item(row=row, column=3, text="")
+
     def _property_value_text(self, varset: Any, property_name: str) -> str:
         try:
             return stringify_value(varset.getPropertyByName(property_name))
@@ -315,6 +333,11 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         row = int(item.row())
         column = int(item.column())
+        if self._is_new_variable_row(row=row):
+            self._add_variable_from_new_row(row=row)
+            self._resize_to_contents()
+            return
+
         if column == 0:
             self._rename_variable(row=row, new_name=item.text().strip())
         elif column == 1:
@@ -323,6 +346,51 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             self._change_tooltip(row=row, text=item.text())
 
         self._resize_to_contents()
+
+    def _add_variable_from_new_row(self, row: int) -> None:
+        varset = self._selected_varset()
+        if varset is None:
+            return
+
+        name = self._item_text(row=row, column=0).strip()
+        if not name:
+            return
+
+        if not validate_property_name(name):
+            self._reset_text(row=row, column=0, text="")
+            App.Console.PrintError("Variable names must be valid Python-style identifiers.\n")
+            return
+
+        if name in getattr(varset, "PropertiesList", []):
+            self._reset_text(row=row, column=0, text="")
+            App.Console.PrintError(f"Variable '{name}' already exists.\n")
+            return
+
+        type_id = self._type_text(row=row)
+        value_text = self._item_text(row=row, column=1)
+        tooltip = self._item_text(row=row, column=3)
+
+        try:
+            value = parse_value(type_id=type_id, text=value_text)
+        except Exception as error:
+            App.Console.PrintError(f"Could not create variable '{name}': {error}\n")
+            return
+
+        def add_variable() -> None:
+            varset.addProperty(type_id, name, VARIABLE_GROUP, tooltip)
+            set_property_value(varset, name, value)
+
+        try:
+            run_transaction(
+                document=self.document,
+                label=translate("Franky", "Add VarSet variable"),
+                action=add_variable,
+            )
+        except Exception as error:
+            App.Console.PrintError(f"Could not create variable '{name}': {error}\n")
+            return
+
+        self._load_selected_varset()
 
     def _rename_variable(self, row: int, new_name: str) -> None:
         varset = self._selected_varset()
@@ -397,6 +465,10 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         varset = self._selected_varset()
+        if self._is_new_variable_row(row=row):
+            self._add_variable_from_new_row(row=row)
+            return
+
         variable = self._variable_at(row=row)
         if varset is None or variable is None or type_id == variable.type_id:
             return
@@ -452,9 +524,19 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         return self.variables[row]
 
+    def _is_new_variable_row(self, row: int) -> bool:
+        return self._selected_varset() is not None and row == len(self.variables)
+
     def _item_text(self, row: int, column: int) -> str:
         item = self.table.item(row, column)
         return "" if item is None else item.text()
+
+    def _type_text(self, row: int) -> str:
+        combo = self.table.cellWidget(row, 2)
+        if isinstance(combo, QtWidgets.QComboBox):
+            return str(combo.currentText())
+
+        return DEFAULT_NEW_VARIABLE_TYPE
 
     def _reset_text(self, row: int, column: int, text: str) -> None:
         self.loading = True
@@ -481,7 +563,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         header = self.table.horizontalHeader()
         table_width = sum(self.table.columnWidth(column) for column in range(self.table.columnCount()))
-        table_width += self.table.frameWidth() * 2 + COLUMN_PADDING
+        table_width += self.table.frameWidth() * 2 + TABLE_PADDING
 
         row_count = self.table.rowCount()
         table_height = header.height() + self.table.frameWidth() * 2
@@ -490,20 +572,32 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         else:
             table_height += self.table.verticalHeader().defaultSectionSize()
 
-        self.table.setMinimumWidth(table_width)
-        self.table.setMinimumHeight(table_height)
-
-        desired_width = max(table_width + 36, self.sizeHint().width())
-        desired_height = max(table_height + self.varset_combo.sizeHint().height() + 72, self.sizeHint().height())
-
         app = QtWidgets.QApplication.instance()
         screen = app.primaryScreen() if app is not None else None
         if screen is not None:
             available = screen.availableGeometry()
-            desired_width = min(desired_width, round(available.width() * MAX_SCREEN_RATIO))
-            desired_height = min(desired_height, round(available.height() * MAX_SCREEN_RATIO))
+            maximum_width = round(available.width() * MAX_SCREEN_RATIO) - (DIALOG_PADDING * 2)
+            maximum_height = round(available.height() * MAX_SCREEN_RATIO) - (
+                self.varset_combo.sizeHint().height() + DIALOG_PADDING * 2 + LAYOUT_SPACING
+            )
 
-        self.resize(desired_width, desired_height)
+            scrollbar_size = self.table.style().pixelMetric(QtWidgets.QStyle.PM_ScrollBarExtent)
+            needs_vertical_scrollbar = table_height > maximum_height
+            if needs_vertical_scrollbar:
+                table_width += scrollbar_size
+
+            needs_horizontal_scrollbar = table_width > maximum_width
+            if needs_horizontal_scrollbar:
+                table_height += scrollbar_size
+
+            if not needs_vertical_scrollbar and table_height > maximum_height:
+                table_width += scrollbar_size
+
+            table_width = min(table_width, maximum_width)
+            table_height = min(table_height, maximum_height)
+
+        self.table.setFixedSize(table_width, table_height)
+        self.adjustSize()
 
     def _varset_label(self, varset: Any) -> str:
         name = str(getattr(varset, "Name", ""))
@@ -515,7 +609,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
 
 class VarSetQuickEditCommand:
-    """Open the VarSet quick edit dialog."""
+    """Open the VarSet Quick Editor dialog."""
 
     Name: ClassVar[str] = "Franky_VarSetQuickEdit"
     Dialog: ClassVar[VarSetQuickEditDialog | None] = None
@@ -525,11 +619,11 @@ class VarSetQuickEditCommand:
             "Pixmap": Resources.icon(path="brackets.svg"),
             "MenuText": translate(
                 "Franky",
-                "VarSet Quick Edit",
+                "VarSet Quick Editor",
             ),
             "ToolTip": translate(
                 "Franky",
-                "Quickly edit variable sets",
+                "Quickly edit Variable Sets",
             ),
         }
 

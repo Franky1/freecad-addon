@@ -58,7 +58,6 @@ from .export_orcaslicer import ExportOrcaSlicerCommand as ExportOrcaSlicerComman
 from .export_step import ExportStepCommand as ExportStepCommand
 from .export_stl import ExportStlCommand as ExportStlCommand
 from .manipulator import WorkbenchManipulator as WorkbenchManipulator
+from .new_project import NewProjectCommand as NewProjectCommand
 from .screenshot import ScreenshotCommand as ScreenshotCommand
 from .varset_quickedit import VarSetQuickEditCommand as VarSetQuickEditCommand
-
-# from .new_project import NewProjectCommand as NewProjectCommand

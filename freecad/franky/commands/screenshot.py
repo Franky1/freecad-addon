@@ -16,7 +16,7 @@ translate = App.Qt.translate
 from ..resources import Resources
 
 BACKGROUND_TOLERANCE: int = 8
-CROP_PADDING_RATIO: float = 0.05
+CROP_PADDING_RATIO: float = 0.1
 NAVICUBE_PARAM_PATH: str = "User parameter:BaseApp/Preferences/View"
 NAVICUBE_ENABLED_PARAM: str = "ShowNaviCube"
 
