@@ -31,7 +31,13 @@ PROPERTY_TYPES: tuple[str, ...] = (
     "App::PropertyPercent",
 )
 DEFAULT_NEW_VARIABLE_TYPE: str = "App::PropertyLength"
-COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int] = (160, 160, 180, 280)
+LABEL_COLUMN: int = 0
+VALUE_COLUMN: int = 1
+EXPRESSION_COLUMN: int = 2
+TYPE_COLUMN: int = 3
+TOOLTIP_COLUMN: int = 4
+COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int] = (160, 160, 260, 180, 280)
+EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (217, 122, 31)
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
 TABLE_PADDING: int = 12
@@ -134,6 +140,69 @@ def stringify_value(value: Any) -> str:
     return str(value)
 
 
+def stringify_expression(expression: Any) -> str:
+    """Return readable expression text from FreeCAD expression objects."""
+    if expression is None:
+        return ""
+
+    to_string = getattr(expression, "toString", None)
+    if callable(to_string):
+        try:
+            text = to_string()
+        except Exception:
+            text = None
+
+        if text is not None:
+            expression_text = str(text).strip()
+            if expression_text and expression_text != "None":
+                return expression_text
+
+    expression_text = str(expression).strip()
+    if not expression_text or expression_text == "None":
+        return ""
+
+    return expression_text
+
+
+def expression_path_matches_property(path: Any, property_name: str) -> bool:
+    """Return whether an ExpressionEngine path targets the given direct property."""
+    path_text = str(path).strip()
+    return path_text == property_name or path_text.endswith(f".{property_name}")
+
+
+def get_property_expression(obj: Any, property_name: str) -> str:
+    """Return the expression that calculates a property, if FreeCAD exposes one."""
+    get_expression = getattr(obj, "getExpression", None)
+    if callable(get_expression):
+        try:
+            expression = get_expression(property_name)
+        except Exception:
+            expression = None
+
+        expression_text = stringify_expression(expression)
+        if expression_text:
+            return expression_text
+
+    try:
+        expression_engine = getattr(obj, "ExpressionEngine", [])
+    except Exception:
+        return ""
+
+    try:
+        entries = list(expression_engine or [])
+    except TypeError:
+        return ""
+
+    for entry in entries:
+        if not isinstance(entry, list | tuple) or len(entry) < 2:
+            continue
+
+        if expression_path_matches_property(path=entry[0], property_name=property_name):
+            return stringify_expression(entry[1])
+
+    return ""
+
+
 def parse_value(type_id: str, text: str) -> Any:
     """Parse text from the editor into a value suitable for a FreeCAD property."""
     stripped = text.strip()
@@ -211,11 +280,12 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.varset_combo.currentIndexChanged.connect(self._selected_varset_changed)
 
         self.table = QtWidgets.QTableWidget(parent=self)
-        self.table.setColumnCount(4)
+        self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(
             [
-                translate("Franky", "Name"),
-                translate("Franky", "Value"),
+                translate("Franky", "Label"),
+                translate("Franky", "VarSet Value"),
+                translate("Franky", "Expression"),
                 translate("Franky", "Type"),
                 translate("Franky", "Tooltip"),
             ]
@@ -289,20 +359,47 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             self.variables = list_variables(varset=varset)
             self.table.setRowCount(len(self.variables) + 1)
             for row, variable in enumerate(self.variables):
-                self._set_text_item(row=row, column=0, text=variable.name)
-                self._set_text_item(row=row, column=1, text=self._property_value_text(varset, variable.name))
+                expression = get_property_expression(obj=varset, property_name=variable.name)
+                self._set_text_item(row=row, column=LABEL_COLUMN, text=variable.name)
+                self._set_value_item(
+                    row=row, text=self._property_value_text(varset, variable.name), expression=expression
+                )
+                self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression, editable=False)
                 self._set_type_combo(row=row, variable=variable)
-                self._set_text_item(row=row, column=3, text=variable.tooltip)
+                self._set_text_item(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
 
             self._set_new_variable_row(row=len(self.variables))
 
         self.loading = False
         self._resize_to_contents()
 
-    def _set_text_item(self, row: int, column: int, text: str) -> None:
+    def _set_text_item(self, row: int, column: int, text: str, editable: bool = True) -> None:
         item = QtWidgets.QTableWidgetItem(text)
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        if editable:
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        else:
+            item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         self.table.setItem(row, column, item)
+
+    def _set_value_item(self, row: int, text: str, expression: str) -> None:
+        self._set_text_item(row=row, column=VALUE_COLUMN, text=text)
+        item = self.table.item(row, VALUE_COLUMN)
+        if item is None or not expression:
+            return
+
+        item.setForeground(QtGui.QColor(*EXPRESSION_VALUE_COLOR_RGB))
+        item.setToolTip(translate("Franky", "Calculated by expression"))
+
+    def _reset_value_and_expression(self, row: int, varset: Any, variable: VariableInfo) -> None:
+        value_text = self._property_value_text(varset, variable.name)
+        expression = get_property_expression(obj=varset, property_name=variable.name)
+
+        self.loading = True
+        try:
+            self._set_value_item(row=row, text=value_text, expression=expression)
+            self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression, editable=False)
+        finally:
+            self.loading = False
 
     def _set_type_combo(self, row: int, variable: VariableInfo) -> None:
         combo = QtWidgets.QComboBox(parent=self.table)
@@ -315,11 +412,12 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         combo.currentIndexChanged.connect(
             lambda _index, combo=combo, row=row: self._type_changed(row=row, type_id=combo.currentText())
         )
-        self.table.setCellWidget(row, 2, combo)
+        self.table.setCellWidget(row, TYPE_COLUMN, combo)
 
     def _set_new_variable_row(self, row: int) -> None:
-        self._set_text_item(row=row, column=0, text="")
-        self._set_text_item(row=row, column=1, text="")
+        self._set_text_item(row=row, column=LABEL_COLUMN, text="")
+        self._set_text_item(row=row, column=VALUE_COLUMN, text="")
+        self._set_text_item(row=row, column=EXPRESSION_COLUMN, text="", editable=False)
         variable = VariableInfo(
             name="",
             type_id=DEFAULT_NEW_VARIABLE_TYPE,
@@ -330,7 +428,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             row=row,
             variable=variable,
         )
-        self._set_text_item(row=row, column=3, text="")
+        self._set_text_item(row=row, column=TOOLTIP_COLUMN, text="")
 
     def _new_variable_group(self) -> str:
         if not self.variables:
@@ -355,11 +453,11 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             self._resize_to_contents()
             return
 
-        if column == 0:
+        if column == LABEL_COLUMN:
             self._rename_variable(row=row, new_name=item.text().strip())
-        elif column == 1:
+        elif column == VALUE_COLUMN:
             self._change_value(row=row, text=item.text())
-        elif column == 3:
+        elif column == TOOLTIP_COLUMN:
             self._change_tooltip(row=row, text=item.text())
 
         self._resize_to_contents()
@@ -369,24 +467,24 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         if varset is None:
             return
 
-        name = self._item_text(row=row, column=0).strip()
+        name = self._item_text(row=row, column=LABEL_COLUMN).strip()
         if not name:
             return
 
         if not validate_property_name(name):
-            self._reset_text(row=row, column=0, text="")
+            self._reset_text(row=row, column=LABEL_COLUMN, text="")
             App.Console.PrintError("Variable names must be valid Python-style identifiers.\n")
             return
 
         if name in getattr(varset, "PropertiesList", []):
-            self._reset_text(row=row, column=0, text="")
+            self._reset_text(row=row, column=LABEL_COLUMN, text="")
             App.Console.PrintError(f"Variable '{name}' already exists.\n")
             return
 
         type_id = self._type_text(row=row)
         group = self._new_variable_group()
-        value_text = self._item_text(row=row, column=1)
-        tooltip = self._item_text(row=row, column=3)
+        value_text = self._item_text(row=row, column=VALUE_COLUMN)
+        tooltip = self._item_text(row=row, column=TOOLTIP_COLUMN)
 
         try:
             value = parse_value(type_id=type_id, text=value_text)
@@ -417,12 +515,12 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             return
 
         if not validate_property_name(new_name):
-            self._reset_text(row=row, column=0, text=variable.name)
+            self._reset_text(row=row, column=LABEL_COLUMN, text=variable.name)
             App.Console.PrintError("Variable names must be valid Python-style identifiers.\n")
             return
 
         if new_name in getattr(varset, "PropertiesList", []):
-            self._reset_text(row=row, column=0, text=variable.name)
+            self._reset_text(row=row, column=LABEL_COLUMN, text=variable.name)
             App.Console.PrintError(f"Variable '{new_name}' already exists.\n")
             return
 
@@ -433,7 +531,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
                 action=lambda: varset.renameProperty(variable.name, new_name),
             )
         except Exception as error:
-            self._reset_text(row=row, column=0, text=variable.name)
+            self._reset_text(row=row, column=LABEL_COLUMN, text=variable.name)
             App.Console.PrintError(f"Could not rename variable '{variable.name}': {error}\n")
             return
 
@@ -453,11 +551,11 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
                 action=lambda: set_property_value(varset, variable.name, value),
             )
         except Exception as error:
-            self._reset_text(row=row, column=1, text=self._property_value_text(varset, variable.name))
+            self._reset_value_and_expression(row=row, varset=varset, variable=variable)
             App.Console.PrintError(f"Could not update variable '{variable.name}': {error}\n")
             return
 
-        self._reset_text(row=row, column=1, text=self._property_value_text(varset, variable.name))
+        self._reset_value_and_expression(row=row, varset=varset, variable=variable)
 
     def _change_tooltip(self, row: int, text: str) -> None:
         varset = self._selected_varset()
@@ -472,7 +570,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
                 action=lambda: varset.setDocumentationOfProperty(variable.name, text),
             )
         except Exception as error:
-            self._reset_text(row=row, column=3, text=variable.tooltip)
+            self._reset_text(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
             App.Console.PrintError(f"Could not update tooltip for '{variable.name}': {error}\n")
             return
 
@@ -491,8 +589,8 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         if varset is None or variable is None or type_id == variable.type_id:
             return
 
-        value_text = self._item_text(row=row, column=1)
-        tooltip = self._item_text(row=row, column=3)
+        value_text = self._item_text(row=row, column=VALUE_COLUMN)
+        tooltip = self._item_text(row=row, column=TOOLTIP_COLUMN)
 
         try:
             value = parse_value(type_id=type_id, text=value_text)
@@ -523,7 +621,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
         variable.type_id = type_id
         variable.tooltip = tooltip
-        self._reset_text(row=row, column=1, text=self._property_value_text(varset, variable.name))
+        self._reset_value_and_expression(row=row, varset=varset, variable=variable)
         self._resize_to_contents()
 
     def _restore_property(self, varset: Any, variable: VariableInfo, old_type_id: str, old_value: Any) -> None:
@@ -550,7 +648,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         return "" if item is None else item.text()
 
     def _type_text(self, row: int) -> str:
-        combo = self.table.cellWidget(row, 2)
+        combo = self.table.cellWidget(row, TYPE_COLUMN)
         if isinstance(combo, QtWidgets.QComboBox):
             return str(combo.currentText())
 
@@ -564,7 +662,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.loading = False
 
     def _reset_type(self, row: int, type_id: str) -> None:
-        combo = self.table.cellWidget(row, 2)
+        combo = self.table.cellWidget(row, TYPE_COLUMN)
         if not isinstance(combo, QtWidgets.QComboBox):
             return
 

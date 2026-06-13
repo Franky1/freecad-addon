@@ -2,7 +2,7 @@
 
 # Franky
 
-Personal FreeCAD AddOn Workbench Version 0.2.11
+Personal FreeCAD AddOn Workbench Version 0.2.12
 
 ## Features
 
