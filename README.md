@@ -33,7 +33,7 @@
 
 ## WIP :construction: :construction: :construction:
 
-This repository is a work in progress and untested. Do not use it yet.
+This repository is heavily work in progress and partially untested. Do not use it yet.
 
 ## About :information_source:
 
