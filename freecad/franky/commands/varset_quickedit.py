@@ -43,6 +43,7 @@ TOOLTIP_COLUMN: int = 5
 DELETE_COLUMN: int = 6
 COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int, int] = (100, 160, 80, 240, 180, 240, 48)
 EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (255, 165, 0)  # orange
+EXPRESSION_ERROR_COLOR_RGB: tuple[int, int, int] = (255, 80, 80)  # red, for expressions that fail to resolve
 DELETE_BUTTON_STYLE: str = "QToolButton { color: #ff0000; }"
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
@@ -78,9 +79,7 @@ EXPRESSION_FUNCTIONS: tuple[str, ...] = (
 )
 # Trailing token under the cursor: an identifier or a closed ``<<Label>>`` group, optionally followed by
 # ``.member`` parts, or an unfinished ``<<Label`` reference still being typed.
-EXPRESSION_TOKEN_RE: re.Pattern[str] = re.compile(
-    r"(?:(?:<<[^<>]*>>|[A-Za-z_]\w*)(?:\.\w*)*|<<[^<>]*)$"
-)
+EXPRESSION_TOKEN_RE: re.Pattern[str] = re.compile(r"(?:(?:<<[^<>]*>>|[A-Za-z_]\w*)(?:\.\w*)*|<<[^<>]*)$")
 
 
 @dataclass
@@ -240,6 +239,24 @@ def get_property_expression(obj: Any, property_name: str) -> str:
             return stringify_expression(entry[1])
 
     return ""
+
+
+def expression_resolves(obj: Any, expression: str) -> bool:
+    """Return whether FreeCAD can evaluate the expression in the object's context."""
+    expression_text = expression.strip()
+    if not expression_text:
+        return True
+
+    eval_expression = getattr(obj, "evalExpression", None)
+    if not callable(eval_expression):
+        return True
+
+    try:
+        eval_expression(expression_text)
+    except Exception:
+        return False
+
+    return True
 
 
 def set_property_expression(obj: Any, property_name: str, expression: str) -> None:
@@ -460,7 +477,9 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.table.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.table.itemChanged.connect(self._item_changed)
-        self.table.setItemDelegateForColumn(EXPRESSION_COLUMN, ExpressionCompletionDelegate(dialog=self, parent=self.table))
+        self.table.setItemDelegateForColumn(
+            EXPRESSION_COLUMN, ExpressionCompletionDelegate(dialog=self, parent=self.table)
+        )
 
         selector_layout = QtWidgets.QHBoxLayout()
         selector_layout.setContentsMargins(0, 0, 0, 0)
@@ -571,7 +590,7 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
                     self._set_value_item(
                         row=row, text=self._property_value_text(varset, variable.name), expression=expression
                     )
-                    self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
+                    self._set_expression_item(row=row, varset=varset, expression=expression)
                     self._set_type_combo(row=row, variable=variable)
                     self._set_text_item(row=row, column=TOOLTIP_COLUMN, text=variable.tooltip)
                     self._set_delete_button(row=row, variable=variable)
@@ -617,13 +636,23 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
         item.setForeground(QtGui.QColor(*EXPRESSION_VALUE_COLOR_RGB))
         item.setToolTip(translate("Franky", "Calculated by expression"))
 
+    def _set_expression_item(self, row: int, varset: Any, expression: str) -> None:
+        self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
+        item = self.table.item(row, EXPRESSION_COLUMN)
+        if item is None or not expression:
+            return
+
+        if not expression_resolves(obj=varset, expression=expression):
+            item.setForeground(QtGui.QColor(*EXPRESSION_ERROR_COLOR_RGB))
+            item.setToolTip(translate("Franky", "Expression could not be resolved"))
+
     def _reset_value_and_expression(self, row: int, varset: Any, variable: VariableInfo) -> None:
         value_text = self._property_value_text(varset, variable.name)
         expression = get_property_expression(obj=varset, property_name=variable.name)
 
         with self._table_update():
             self._set_value_item(row=row, text=value_text, expression=expression)
-            self._set_text_item(row=row, column=EXPRESSION_COLUMN, text=expression)
+            self._set_expression_item(row=row, varset=varset, expression=expression)
 
     def _set_type_combo(self, row: int, variable: VariableInfo) -> None:
         combo = QtWidgets.QComboBox(parent=self.table)
