@@ -35,9 +35,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, TypeAlias
 
-import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore, QtGui, QtWidgets
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -206,6 +207,33 @@ def set_body_color(body: Any, color: BodyColor) -> None:
         pass
 
 
+def activate_body(document: Any, body: Any) -> None:
+    """Make ``body`` the active PartDesign body so ``newObject`` places features inside it.
+
+    Without this, only the first (auto-activated) body keeps its features. For later bodies the
+    GUI redirects ``newObject`` features into the active container (the body's folder group)
+    because the active body is still the first one. This is GUI-only state, so it is a no-op
+    in headless runs where the redirection does not happen.
+    """
+    if not App.GuiUp:
+        return
+
+    try:
+        gui_document = Gui.getDocument(document.Name)
+    except Exception:
+        return
+
+    view = getattr(gui_document, "ActiveView", None)
+    set_active = getattr(view, "setActiveObject", None)
+    if not callable(set_active):
+        return
+
+    try:
+        set_active("pdbody", body)
+    except Exception:
+        pass
+
+
 def rename_body_origin(body: Any, label: str) -> None:
     """Rename the implicit PartDesign Body origin when FreeCAD exposes it."""
     origin = getattr(body, "Origin", None)
@@ -363,6 +391,7 @@ def create_body_objects(document: Any, template: BodyTemplate) -> None:
     rename_body_origin(body=body, label=template.object_label(object_type="Origin"))
     set_description(obj=body, description=template.description)
     add_to_group(group=body_group, obj=body)
+    activate_body(document=document, body=body)
 
     if template.sketch_plane != "None":
         sketch_label = template.object_label(object_type="Sketch")
