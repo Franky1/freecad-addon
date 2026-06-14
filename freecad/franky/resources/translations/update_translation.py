@@ -267,9 +267,7 @@ def main() -> None:
             print_err(f"Error: {ts_file} not found.")
             sys.exit(1)
         if not linguist:
-            print_err(
-                "Warning: linguist not found. Ensure PySide6 is installed (uv add --dev PySide6)."
-            )
+            print_err("Warning: linguist not found. Ensure PySide6 is installed (uv add --dev PySide6).")
             print_err(f"To open manually: pyside6-linguist {ts_file}")
         else:
             print(f"Opening {ts_file} in Qt Linguist...")

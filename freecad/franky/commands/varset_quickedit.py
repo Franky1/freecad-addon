@@ -3,14 +3,16 @@
 """Command to quickly edit variable sets in a more user-friendly way than the default FreeCAD interface."""
 
 import keyword
+import re
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
-import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore, QtGui, QtWidgets
+
+import FreeCAD as App
 
 translate = App.Qt.translate
 
@@ -39,13 +41,46 @@ EXPRESSION_COLUMN: int = 3
 TYPE_COLUMN: int = 4
 TOOLTIP_COLUMN: int = 5
 DELETE_COLUMN: int = 6
-COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int, int] = (140, 160, 160, 260, 180, 280, 48)
-EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (217, 122, 31)
-DELETE_BUTTON_STYLE: str = "QToolButton { color: #c62828; }"
+COLUMN_MINIMUM_WIDTHS: tuple[int, int, int, int, int, int, int] = (100, 160, 80, 240, 180, 240, 48)
+EXPRESSION_VALUE_COLOR_RGB: tuple[int, int, int] = (255, 165, 0)  # orange
+DELETE_BUTTON_STYLE: str = "QToolButton { color: #ff0000; }"
 DIALOG_PADDING: int = 16
 LAYOUT_SPACING: int = 10
 TABLE_PADDING: int = 12
 MAX_SCREEN_RATIO: float = 0.85
+
+# Built-in FreeCAD expression functions, offered as completions (the trailing "(" is inserted too).
+EXPRESSION_FUNCTIONS: tuple[str, ...] = (
+    "abs(",
+    "acos(",
+    "asin(",
+    "atan(",
+    "atan2(",
+    "ceil(",
+    "cos(",
+    "cosh(",
+    "exp(",
+    "floor(",
+    "hypot(",
+    "log(",
+    "log10(",
+    "max(",
+    "min(",
+    "mod(",
+    "pow(",
+    "round(",
+    "sin(",
+    "sinh(",
+    "sqrt(",
+    "tan(",
+    "tanh(",
+    "trunc(",
+)
+# Trailing token under the cursor: an identifier or a closed ``<<Label>>`` group, optionally followed by
+# ``.member`` parts, or an unfinished ``<<Label`` reference still being typed.
+EXPRESSION_TOKEN_RE: re.Pattern[str] = re.compile(
+    r"(?:(?:<<[^<>]*>>|[A-Za-z_]\w*)(?:\.\w*)*|<<[^<>]*)$"
+)
 
 
 @dataclass
@@ -283,6 +318,108 @@ def run_transaction(document: Any, label: str, action: Callable[[], None]) -> No
     document.recompute()
 
 
+class ExpressionLineEdit(QtWidgets.QLineEdit):
+    """Line edit that completes existing project variables, objects and functions while editing."""
+
+    def __init__(self, context: dict[str, Any], parent: Any = None) -> None:
+        super().__init__(parent)
+        self._context = context
+        self._current_prefix = ""
+
+        self._model = QtCore.QStringListModel(self)
+        self._completer = QtWidgets.QCompleter(self)
+        self._completer.setModel(self._model)
+        self._completer.setWidget(self)
+        self._completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self._completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        self._completer.activated[str].connect(self._insert_completion)
+
+        self.textEdited.connect(self._update_completions)
+
+    def keyPressEvent(self, event: Any) -> None:
+        if self._completer.popup().isVisible() and event.key() in (
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+            QtCore.Qt.Key_Escape,
+            QtCore.Qt.Key_Tab,
+            QtCore.Qt.Key_Backtab,
+        ):
+            # Let the completer's event filter handle navigation/acceptance instead of the cell editor.
+            event.ignore()
+            return
+
+        super().keyPressEvent(event)
+
+    def _update_completions(self, _text: str = "") -> None:
+        token = self._token_under_cursor()
+        if not token:
+            self._completer.popup().hide()
+            return
+
+        mode, base, prefix = self._classify(token)
+        candidates = self._candidates(mode=mode, base=base)
+        self._current_prefix = prefix
+
+        self._model.setStringList(candidates)
+        self._completer.setCompletionPrefix(prefix)
+        if self._completer.completionCount() == 0:
+            self._completer.popup().hide()
+            return
+
+        popup = self._completer.popup()
+        popup.setCurrentIndex(self._completer.completionModel().index(0, 0))
+        self._completer.complete()
+
+    def _token_under_cursor(self) -> str:
+        text_before_cursor = self.text()[: self.cursorPosition()]
+        match = EXPRESSION_TOKEN_RE.search(text_before_cursor)
+        return match.group(0) if match else ""
+
+    def _classify(self, token: str) -> tuple[str, str | None, str]:
+        if token.startswith("<<") and ">>" not in token:
+            return "label", None, token
+
+        if "." in token:
+            base, _, partial = token.rpartition(".")
+            return "property", base, partial
+
+        return "top", None, token
+
+    def _candidates(self, mode: str, base: str | None) -> list[str]:
+        if mode == "label":
+            return self._context["labels"]
+
+        if mode == "property":
+            return self._context["props"].get(base, [])
+
+        return self._context["top"]
+
+    def _insert_completion(self, completion: str) -> None:
+        cursor = self.cursorPosition()
+        text = self.text()
+        start = cursor - len(self._current_prefix)
+        self.setText(text[:start] + completion + text[cursor:])
+        self.setCursorPosition(start + len(completion))
+        self._completer.popup().hide()
+
+
+class ExpressionCompletionDelegate(QtWidgets.QStyledItemDelegate):
+    """Cell delegate that edits the Expression column with a variable-aware autocompleting line edit."""
+
+    def __init__(self, dialog: "VarSetQuickEditDialog", parent: Any = None) -> None:
+        super().__init__(parent)
+        self.dialog = dialog
+
+    def createEditor(self, parent: Any, option: Any, index: Any) -> Any:
+        return ExpressionLineEdit(context=self.dialog.expression_context(), parent=parent)
+
+    def setEditorData(self, editor: Any, index: Any) -> None:
+        editor.setText(str(index.data(QtCore.Qt.EditRole) or ""))
+
+    def setModelData(self, editor: Any, model: Any, index: Any) -> None:
+        model.setData(index, editor.text(), QtCore.Qt.EditRole)
+
+
 class VarSetQuickEditDialog(QtWidgets.QDialog):
     """Dialog for editing variables from document variable sets."""
 
@@ -317,11 +454,13 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
             ]
         )
         self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.table.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.table.itemChanged.connect(self._item_changed)
+        self.table.setItemDelegateForColumn(EXPRESSION_COLUMN, ExpressionCompletionDelegate(dialog=self, parent=self.table))
 
         selector_layout = QtWidgets.QHBoxLayout()
         selector_layout.setContentsMargins(0, 0, 0, 0)
@@ -374,6 +513,36 @@ class VarSetQuickEditDialog(QtWidgets.QDialog):
 
     def _selected_varset(self) -> Any | None:
         return self.varsets.get(self._selected_varset_name())
+
+    def expression_context(self) -> dict[str, Any]:
+        """Build the completion data offered while editing an expression.
+
+        Returns a mapping with ``top`` (identifiers usable at the start of a token: the current
+        VarSet's variables, object names and functions), ``labels`` (``<<Label>>`` references for
+        every document object) and ``props`` (property names keyed by both object name and
+        ``<<Label>>`` reference, used after a ``.``).
+        """
+        object_names: list[str] = []
+        labels: list[str] = []
+        props: dict[str, list[str]] = {}
+
+        for obj in getattr(self.document, "Objects", []):
+            name = str(getattr(obj, "Name", ""))
+            if not name:
+                continue
+
+            label = str(getattr(obj, "Label", "") or name)
+            property_names = [str(property_name) for property_name in getattr(obj, "PropertiesList", [])]
+
+            object_names.append(name)
+            labels.append(f"<<{label}>>")
+            props[name] = property_names
+            props[f"<<{label}>>"] = property_names
+
+        variable_names = [variable.name for variable in self.variables]
+        top = list(dict.fromkeys([*variable_names, *object_names, *EXPRESSION_FUNCTIONS]))
+
+        return {"top": top, "labels": labels, "props": props}
 
     @contextmanager
     def _table_update(self) -> Iterator[None]:
