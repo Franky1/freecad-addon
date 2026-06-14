@@ -56,15 +56,15 @@ The addon provides the following commands, available from the **Franky** workben
 | <img src="freecad/franky/resources/icons/export2ideamaker.svg" alt="Export to IdeaMaker icon" width="24"> | **Export to IdeaMaker** | Exports the selected object(s) to STEP file(s) and opens them in [IdeaMaker](https://www.raise3d.com/ideamaker/). |
 | <img src="freecad/franky/resources/icons/export2bambustudio.svg" alt="Export to Bambu Studio icon" width="24"> | **Export to Bambu Studio** | Exports the selected object(s) to STEP file(s) and opens them in [Bambu Studio](https://bambulab.com/en/download/studio). |
 | <img src="freecad/franky/resources/icons/export2orcaslicer.svg" alt="Export to OrcaSlicer icon" width="24"> | **Export to OrcaSlicer** | Exports the selected object(s) to STEP file(s) and opens them in [OrcaSlicer](https://www.orcaslicer.com/). |
-| <img src="freecad/franky/resources/icons/camera.svg" alt="Camera icon" width="24"> | **Screenshot to File** | Capture a screenshot of the current view and save to PNG file. |
-| <img src="freecad/franky/resources/icons/clipboard.svg" alt="Clipboard icon" width="24"> | **Screenshot to Clipboard** | Capture a screenshot of the current view and copy to Clipboard. |
+| <img src="freecad/franky/resources/icons/camera.svg" alt="Camera icon" width="24"> | **Screenshot to File** | Capture a screenshot of current view and save to PNG file. |
+| <img src="freecad/franky/resources/icons/clipboard.svg" alt="Clipboard icon" width="24"> | **Screenshot to Clipboard** | Capture a screenshot of current view and copy to Clipboard. |
 | <img src="freecad/franky/resources/icons/brackets.svg" alt="VarSet Quick Edit icon" width="24"> | **VarSet Quick Edit** | Quickly edit and delete variable set entries, including expressions with autocompletion of existing variables, objects and functions. |
 | <img src="freecad/franky/resources/icons/newproject.svg" alt="New Project icon" width="24"> | **New Project** | Create a new project with predefined structure, body colors, and ordered object labels. |
 
 Each command requires an active, saved document with one or more objects selected. A separate file is written per selected object, named `<document>-<label>.<ext>` (where `<ext>` is `step`, `stl`, or `3mf`), next to the FreeCAD document.
 
 > :information_source: The slicer executables are auto-detected in their default Windows install locations. The slicer commands are currently **Windows-only**.
-> The plain **Export to STEP**, **Export to STL**, and **Export to 3MF** commands work on any platform.
+> The plain **Export to STEP**, **Export to STL**, and **Export to 3MF** commands should work on any platform.
 
 ## Installation :inbox_tray:
 
@@ -124,4 +124,5 @@ This project is licensed under the GNU Lesser General Public License v2.1 or lat
 
 Copyright (c) 2026 Franky1
 
-See [LICENSE](LICENSE) for the full license text.
+See [LICENSE-Code](LICENSE-Code) for the full code related license text.
+See [LICENSE-Assets](LICENSE-Assets) for the full assets related license text.
