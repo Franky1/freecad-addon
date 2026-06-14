@@ -125,4 +125,5 @@ This project is licensed under the GNU Lesser General Public License v2.1 or lat
 Copyright (c) 2026 Franky1
 
 See [LICENSE-Code](LICENSE-Code) for the full code related license text.
+
 See [LICENSE-Assets](LICENSE-Assets) for the full assets related license text.
